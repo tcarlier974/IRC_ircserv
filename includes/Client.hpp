@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/10 14:51:49 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/05/10 15:49:36 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/05/10 17:42:21 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,5 @@ class Client
 		int GetFd(void);
 		std::string GetIPadd(void);
 };
-
 
 #endif
