@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/10 15:49:53 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/05/10 16:00:45 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/05 19:06:09 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,11 +18,18 @@
 class Server
 {
 	private :
-		int Port;
-		int SerSocketFd;
-		static bool sig;
-		std::vector< Client > Clients;
-		std::vector< struct pollfd > fds;
+		int _Port;
+		int _SerSocketFd;
+		std::string _Password;
+		static bool _sig;
+		std::vector< Client > _Clients;
+		std::vector< struct pollfd > _fds;
+		int	_NextChannelId;
+		std::string _hostName;
+		// std::vector< Channel > _Channels;
+		std::set< std::string > _ClientNames;
+		std::set< std::string > _Topics;
+		// std::vector< Parser > _parsedMessages;
 	public :
 		Server();
 		Server(char **av);
@@ -34,11 +41,18 @@ class Server
 		void SerSocket();
 		void AcceptNewClient();
 		void ReceiveNewData(int fd);
+		void run();
 
 		static void SigHandler(int signum);
 
 		void Closefds();
 		void ClearClients(int fd);
+
+		bool getSig() const;
+		Client *getClientByFd(int fd);
+
+		int setPort(char *port);
+		std::string setPassword(char *password);
 };
 
 #endif
