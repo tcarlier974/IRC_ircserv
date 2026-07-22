@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/10 14:51:49 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/05 19:06:09 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/22 20:20:49 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,7 @@ class Client
 		bool			_isAuth;
 		bool			_isLog;
 		std::string		_buffer;
+		std::string 	_outBuffer;
 
 	public :
 		Client(void);
@@ -72,6 +73,11 @@ class Client
 		void SetAuth(bool auth);
 		void SetLog(bool log);
 		int GetFd(void);
+		void SetBuffer(std::string buffer);
+		void AppendBuffer(std::string str);
+		void AppendOutBuffer(std::string str);
+		std::string GetOutBuffer(void);
+		std::string GetBuffer(void);
 		std::string GetIPadd(void);
 		std::string GetUsername(void);
 		std::string GetNickname(void);
@@ -80,6 +86,7 @@ class Client
 		bool GetRegistered(void);
 		bool GetAuth(void);
 		bool GetLog(void);
+		void EraseOutBuffer(size_t pos);
 };
 
 #endif

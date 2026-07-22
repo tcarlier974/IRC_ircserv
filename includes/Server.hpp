@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/10 15:49:53 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/05 19:06:09 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/22 20:08:58 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,9 @@ class Server
 		Server( const Server &other);
 		~Server();
 		Server &operator=(const Server &other);
+
+		void ParseMessage(std::string message, Client *client);
+		void SendMessage(int fd, std::string msg);
 
 		void ServerInit();
 		void SerSocket();

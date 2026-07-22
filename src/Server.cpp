@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/05 19:06:09 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/22 20:24:17 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -176,7 +176,7 @@ void Server::AcceptNewClient()
 		return;
 	}
 	NewPollFd.fd = incomingFd;
-	NewPollFd.events = POLLIN;
+	NewPollFd.events = POLLIN | POLLOUT;
 	NewPollFd.revents = 0;
 
     newClient.SetFd(incomingFd);
@@ -190,6 +190,61 @@ bool Server::getSig() const
 	return Server::_sig;
 }
 
+void Server::SendMessage(int fd, std::string msg)
+{
+    msg += "\r\n";
+    send(fd, msg.c_str(), msg.size(), 0);
+}
+
+void Server::ParseMessage(std::string message, Client *client)
+{
+    std::istringstream iss(message);
+    std::string command;
+    iss >> command;
+
+    if (command == "PASS")
+    {
+        std::string password;
+        iss >> password;
+        if (password == this->_Password)
+            client->SetAuth(true);
+    }
+    else if (command == "NICK")
+    {
+        std::string nickname;
+        iss >> nickname;
+        
+        if (_ClientNames.find(nickname) != _ClientNames.end())
+        {
+            client->AppendOutBuffer(":ircserv 433 * " + nickname + " :Nickname is already in use\r\n");
+            return;
+        }
+        if (!client->GetNickname().empty())
+            _ClientNames.erase(client->GetNickname());
+
+        client->SetNickname(nickname);
+        _ClientNames.insert(nickname);
+    }
+    else if (command == "USER")
+    {
+        std::string username, mode, unused, realname;
+        iss >> username >> mode >> unused;
+        std::getline(iss, realname);
+        
+        if (!username.empty())
+            client->SetUsername(username);
+    }
+    if (client->GetAuth() && !client->GetNickname().empty() && !client->GetUsername().empty() && !client->GetRegistered())
+    {
+        client->SetRegistered(true);
+        client->SetLog(true);
+
+        std::string welcomeMsg = ":ircserv 001 " + client->GetNickname() + " :Welcome to the ft_irc network " + client->GetNickname() + "\r\n";
+        client->AppendOutBuffer(welcomeMsg);
+        
+        std::cout << GRE << "Client <" << client->GetFd() << "> enregistré en tant que " << client->GetNickname() << WHI << std::endl;
+    }
+}
 
 Client	*Server::getClientByFd(int fd)
 {
@@ -229,8 +284,33 @@ void Server::ReceiveNewData(int fd)
 
 	else{
 		buff[bytes] = '\0';
-		std::cout << YEL << "Client <" << fd << "> Data: " << WHI << buff;
-		//here you can add your code to process the received data: parse, check, authenticate, handle the command, etc...
+		Client *client = getClientByFd(fd);
+        std::cout << YEL << "Client <" << fd << "> Data: " << WHI << buff;
+		if (!client)
+            return;
+		client->AppendBuffer(buff);\
+		std::string currentBuffer = client->GetBuffer();
+        size_t pos;
+		while ((pos = currentBuffer.find("\r\n")) != std::string::npos)
+        {
+            // extraire la commande (sans le \r\n parce que nique le RN)
+            std::string message = currentBuffer.substr(0, pos);
+            
+            std::cout << YEL << "Message complet reçu de <" << fd << "> : " << WHI << message << std::endl;
+            
+            // TODO : Envoyer la string "message" vers la fonction de parsing ici
+            
+            currentBuffer.erase(0, pos + 2);
+
+			message = currentBuffer.substr(0, pos);
+			std::cout << YEL << "Message complet reçu de <" << fd << "> : " << WHI << message << std::endl;
+
+			ParseMessage(message, client);
+
+			currentBuffer.erase(0, pos + 2);
+			//here you can add your code to process the received data: parse, check, authenticate, handle the command, etc...
+        }
+        client->SetBuffer(currentBuffer);
 	}
 }
 
@@ -245,24 +325,39 @@ void Server::run()
         	throw std::runtime_error("Error: Polling failed.");
     }
     for ( size_t i = 0; i < this->_fds.size(); i++ )
-    {
-        if ( this->_fds[i].revents & POLLIN )
-        {
-            if ( this->_fds[i].fd == _SerSocketFd )
-                AcceptNewClient();
-            else
-            {
-                Client	*client = getClientByFd( this->_fds[i].fd );
-                if ( !client )
-                {
-                    this->_fds.erase( this->_fds.begin() + i );
-                    if ( i > 0 )
-                        i--;
-                    continue ;
-                }
-                ReceiveNewData( client->GetFd() );
-            }
-        }
-    }
+	{
+		if ( this->_fds[i].revents & POLLIN )
+		{
+			if ( this->_fds[i].fd == _SerSocketFd )
+				AcceptNewClient();
+			else
+			{
+				Client	*client = getClientByFd( this->_fds[i].fd );
+				if ( !client )
+				{
+					this->_fds.erase( this->_fds.begin() + i );
+					if ( i > 0 )
+						i--;
+					continue ;
+				}
+				ReceiveNewData( client->GetFd() );
+			}
+		}
+		// GESTION DU POLLOUT ICI
+		if ( this->_fds[i].revents & POLLOUT )
+		{
+			Client *client = getClientByFd(this->_fds[i].fd);
+			if (client && !client->GetOutBuffer().empty())
+			{
+				std::string out = client->GetOutBuffer();
+				ssize_t bytes = send(client->GetFd(), out.c_str(), out.size(), 0);
+				if (bytes > 0)
+				{
+					// On efface seulement ce qui a été envoyé
+					client->EraseOutBuffer(bytes); 
+				}
+			}
+		}
+	}
 }
 

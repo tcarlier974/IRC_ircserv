@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:16:37 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/05 19:06:09 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/22 20:20:59 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -152,4 +152,34 @@ bool Client::GetAuth(void)
 bool Client::GetLog(void)
 {
     return this->_isLog;
+}
+
+void Client::SetBuffer(std::string buffer)
+{
+    this->_buffer = buffer;
+}
+
+void Client::AppendBuffer(std::string str)
+{
+    this->_buffer += str;
+}
+
+std::string Client::GetBuffer(void)
+{
+    return this->_buffer;
+}
+
+void Client::AppendOutBuffer(std::string str)
+{
+    this->_outBuffer += str;
+}
+
+std::string Client::GetOutBuffer(void)
+{
+    return this->_outBuffer;
+}
+
+void Client::EraseOutBuffer(size_t pos)
+{
+    this->_outBuffer.erase(0, pos);
 }
