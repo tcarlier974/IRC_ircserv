@@ -6,7 +6,7 @@
 /*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/26 13:06:15 by igilbert          #+#    #+#             */
-/*   Updated: 2026/07/26 13:22:09 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/26 13:47:32 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,8 @@ std::string Channel::GetName() const
 
 void Channel::AddMember(Client *client)
 {
-	_members.push_back(client);
+	if (std::find(_members.begin(), _members.end(), client) == _members.end())
+		_members.push_back(client);
 }
 
 void Channel::RemoveMember(Client *client)

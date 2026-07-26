@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/10 16:02:10 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/05 19:06:09 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/26 13:50:34 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,5 +36,6 @@ int main(int ac, char **av)
 		std::cerr << RED << e.what() << WHI << std::endl;
 		return (1);
 	}
+	server.Closefds();
 	return (0);
 }

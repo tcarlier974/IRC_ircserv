@@ -6,7 +6,7 @@
 /*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/26 13:18:01 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/26 13:40:10 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -253,34 +253,54 @@ void Server::ParseMessage(std::string message, Client *client)
     }
 	else if (command == "PRIVMSG")
     {
-        std::string target, text;
-        iss >> target;
-        
-        std::getline(iss, text);
-        if (!text.empty())
-        {
-            size_t start = text.find_first_not_of(" ");
-            if (start != std::string::npos)
-            {
-                text = text.substr(start);
-                if (text[0] == ':')
-                    text = text.substr(1);
-            }
-        }
+		std::string target, text;
+		iss >> target;
+		std::getline(iss, text);
+		
+		if (!text.empty() && text[0] == ' ') text = text.substr(1);
+		if (!text.empty() && text[0] == ':') text = text.substr(1);
 
-        Client *targetClient = getClientByNick(target);
-        if (targetClient)
-        {
-            std::string forwardMsg = ":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " PRIVMSG " + target + " :" + text + "\r\n";
-            targetClient->AppendOutBuffer(forwardMsg);
-            
-            std::cout << "Message routé de " << client->GetNickname() << " vers " << target << std::endl;
-        }
-        else
-        {
-            client->AppendOutBuffer(":ircserv 401 " + client->GetNickname() + " " + target + " :No such nick/channel\r\n");
-            std::cout << "Destinataire introuvable : " << target << std::endl;
-        }
+		// channel
+		if (target[0] == '#') 
+		{
+			Channel *targetChannel = NULL;
+			for (std::vector<Channel>::iterator it = _Channels.begin(); it != _Channels.end(); ++it)
+			{
+				if (it->GetName() == target)
+				{
+					targetChannel = &(*it);
+					break;
+				}
+			}
+
+			if (targetChannel)
+			{
+				std::string msg = ":" + client->GetNickname() + " PRIVMSG " + target + " :" + text + "\r\n";
+				// On utilise BroadcastMessage en excluant l'expéditeur
+				targetChannel->BroadcastMessage(msg, client);
+			}
+			else
+			{
+				client->AppendOutBuffer(":127.0.0.1 401 " + client->GetNickname() + " " + target + " :No such nick/channel\r\n");
+			}
+		}
+		// private msg
+		else 
+		{
+			Client *targetClient = getClientByNick(target);
+			if (targetClient)
+			{
+				std::string forwardMsg = ":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " PRIVMSG " + target + " :" + text + "\r\n";
+				targetClient->AppendOutBuffer(forwardMsg);
+				
+				std::cout << "Message routé de " << client->GetNickname() << " vers " << target << std::endl;
+			}
+			else
+			{
+				client->AppendOutBuffer(":ircserv 401 " + client->GetNickname() + " " + target + " :No such nick/channel\r\n");
+				std::cout << "Destinataire introuvable : " << target << std::endl;
+			}
+		}
     }
 	else if (command == "QUIT")
     {
@@ -304,6 +324,10 @@ void Server::ParseMessage(std::string message, Client *client)
 
 		if (!channelName.empty())
 		{
+			if (channelName[0] != '#')
+			{
+				channelName = "#" + channelName;
+			}
 			Channel *channel = NULL;
 			for (std::vector<Channel>::iterator it = _Channels.begin(); it != _Channels.end(); ++it)
 			{
@@ -324,12 +348,9 @@ void Server::ParseMessage(std::string message, Client *client)
 			std::string joinMsg = ":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " JOIN :" + channelName + "\r\n";
 			channel->BroadcastMessage(joinMsg);
 			
-			// 2. On envoie la liste des noms au client qui vient de rejoindre (RPL_NAMREPLY)
-            // Pour l'instant on triche un peu en n'envoyant que son propre nom pour débloquer l'interface client
-			std::string rpl_namreply = ":127.0.0.1 353 " + client->GetNickname() + " = " + channelName + " :@" + client->GetNickname() + "\r\n";
-            client->AppendOutBuffer(rpl_namreply);
+			std::string rpl_namreply = ":127.0.0.1 353 " + client->GetNickname() + " = " + channelName + " :" + channel->GetMemberList() + "\r\n";
+    		client->AppendOutBuffer(rpl_namreply);
 
-            // 3. On annonce la fin de la liste des noms (RPL_ENDOFNAMES)
             std::string rpl_endofnames = ":127.0.0.1 366 " + client->GetNickname() + " " + channelName + " :End of /NAMES list.\r\n";
             client->AppendOutBuffer(rpl_endofnames);
 		}
