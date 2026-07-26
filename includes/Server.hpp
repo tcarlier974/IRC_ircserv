@@ -6,7 +6,7 @@
 /*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/10 15:49:53 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/22 20:08:58 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/26 10:06:17 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,7 @@ class Server
 
 		bool getSig() const;
 		Client *getClientByFd(int fd);
+		Client *getClientByNick(std::string nick);
 
 		int setPort(char *port);
 		std::string setPassword(char *password);

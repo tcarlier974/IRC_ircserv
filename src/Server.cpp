@@ -6,7 +6,7 @@
 /*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/22 20:24:17 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/26 12:53:02 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -111,8 +111,10 @@ void Server::ServerInit()
 void Server::SerSocket()
 {
     int en = 1;
-    struct sockaddr_in serverAddr; 
+    struct sockaddr_in serverAddr;
     struct pollfd NewPollFd;
+    memset(&serverAddr, 0, sizeof(serverAddr));
+    serverAddr.sin_len = sizeof(serverAddr);
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_addr.s_addr = INADDR_ANY;
     serverAddr.sin_port = htons(this->_Port);
@@ -202,7 +204,16 @@ void Server::ParseMessage(std::string message, Client *client)
     std::string command;
     iss >> command;
 
-    if (command == "PASS")
+	if (command == "CAP")
+    {
+        std::string subCommand;
+        iss >> subCommand;
+        if (subCommand == "LS")
+        {
+            client->AppendOutBuffer("CAP * LS :\r\n");
+        }
+    }
+    else if (command == "PASS")
     {
         std::string password;
         iss >> password;
@@ -234,6 +245,58 @@ void Server::ParseMessage(std::string message, Client *client)
         if (!username.empty())
             client->SetUsername(username);
     }
+	else if (command == "PING")
+    {
+        std::string token;
+        iss >> token;
+        client->AppendOutBuffer(":ircserv PONG " + token + "\r\n");
+    }
+	else if (command == "PRIVMSG")
+    {
+        std::string target, text;
+        iss >> target;
+        
+        std::getline(iss, text);
+        if (!text.empty())
+        {
+            size_t start = text.find_first_not_of(" ");
+            if (start != std::string::npos)
+            {
+                text = text.substr(start);
+                if (text[0] == ':')
+                    text = text.substr(1);
+            }
+        }
+
+        Client *targetClient = getClientByNick(target);
+        if (targetClient)
+        {
+            std::string forwardMsg = ":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " PRIVMSG " + target + " :" + text + "\r\n";
+            targetClient->AppendOutBuffer(forwardMsg);
+            
+            std::cout << "Message routé de " << client->GetNickname() << " vers " << target << std::endl;
+        }
+        else
+        {
+            client->AppendOutBuffer(":ircserv 401 " + client->GetNickname() + " " + target + " :No such nick/channel\r\n");
+            std::cout << "Destinataire introuvable : " << target << std::endl;
+        }
+    }
+	else if (command == "QUIT")
+    {
+        std::string reason;
+        std::getline(iss, reason);
+        if (!reason.empty() && reason[0] == ':')
+            reason = reason.substr(1);
+
+        // TODO plus tard : boucle de verification des channels partagés et envoi du message ":pseudo QUIT :reason"
+
+        int fd = client->GetFd();
+        close(fd);
+        ClearClients(fd);
+        
+        return;
+    }
     if (client->GetAuth() && !client->GetNickname().empty() && !client->GetUsername().empty() && !client->GetRegistered())
     {
         client->SetRegistered(true);
@@ -262,7 +325,11 @@ void Server::ClearClients(int fd)
     {
         if (it->GetFd() == fd)
         {
-            std::cout << RED << "Removing client: " << it->GetNickname() << WHI << std::endl;
+            std::cout << RED << "Removing client: " << it->GetNickname() << " [" << fd << "]" << WHI << std::endl;
+			if (!it->GetNickname().empty())
+            {
+                _ClientNames.erase(it->GetNickname());
+            }
             _Clients.erase(it);
             break;
         }
@@ -277,43 +344,51 @@ void Server::ReceiveNewData(int fd)
 	ssize_t bytes = recv(fd, buff, sizeof(buff) - 1 , 0);
 
 	if(bytes <= 0){
-		std::cout << RED << "Client <" << fd << "> Disconnected" << WHI << std::endl;
+		std::cout << RED << "Client "<< getClientByFd(fd)->GetNickname() << " [" << fd << "] > Disconnected" << WHI << std::endl;
 		ClearClients(fd);
 		close(fd);
 	}
 
 	else{
-		buff[bytes] = '\0';
 		Client *client = getClientByFd(fd);
-        std::cout << YEL << "Client <" << fd << "> Data: " << WHI << buff;
-		if (!client)
+        if (!client)
             return;
-		client->AppendBuffer(buff);\
-		std::string currentBuffer = client->GetBuffer();
+
+        client->AppendBuffer(buff);
+        std::string currentBuffer = client->GetBuffer();
         size_t pos;
-		while ((pos = currentBuffer.find("\r\n")) != std::string::npos)
+        
+        while ((pos = currentBuffer.find('\n')) != std::string::npos)
         {
-            // extraire la commande (sans le \r\n parce que nique le RN)
             std::string message = currentBuffer.substr(0, pos);
             
-            std::cout << YEL << "Message complet reçu de <" << fd << "> : " << WHI << message << std::endl;
+            if (!message.empty() && message[message.length() - 1] == '\r')
+                message.erase(message.length() - 1);
             
-            // TODO : Envoyer la string "message" vers la fonction de parsing ici
+            currentBuffer.erase(0, pos + 1);
             
-            currentBuffer.erase(0, pos + 2);
-
-			message = currentBuffer.substr(0, pos);
-			std::cout << YEL << "Message complet reçu de <" << fd << "> : " << WHI << message << std::endl;
-
-			ParseMessage(message, client);
-
-			currentBuffer.erase(0, pos + 2);
-			//here you can add your code to process the received data: parse, check, authenticate, handle the command, etc...
+            if (message.empty())
+                continue;
+                
+            std::cout << YEL << "Message extrait de "<< client->GetNickname() << " [" << fd << "] " ": " << WHI << message << std::endl;
+            
+            ParseMessage(message, client);
+			if (!getClientByFd(fd))
+				return;
         }
         client->SetBuffer(currentBuffer);
 	}
 }
 
+Client *Server::getClientByNick(std::string nick)
+{
+    for (std::vector<Client>::iterator it = this->_Clients.begin(); it != this->_Clients.end(); ++it)
+    {
+        if (it->GetNickname() == nick)
+            return &(*it);
+    }
+    return NULL;
+}
 
 void Server::run()
 {
@@ -343,18 +418,21 @@ void Server::run()
 				ReceiveNewData( client->GetFd() );
 			}
 		}
-		// GESTION DU POLLOUT ICI
 		if ( this->_fds[i].revents & POLLOUT )
 		{
 			Client *client = getClientByFd(this->_fds[i].fd);
 			if (client && !client->GetOutBuffer().empty())
 			{
 				std::string out = client->GetOutBuffer();
+				std::cout << ">>> Envoi physique à " << client->GetNickname() << " [" << client->GetFd() << "] : " << out;
 				ssize_t bytes = send(client->GetFd(), out.c_str(), out.size(), 0);
 				if (bytes > 0)
 				{
-					// On efface seulement ce qui a été envoyé
 					client->EraseOutBuffer(bytes); 
+				}
+				else if (bytes < 0)
+				{
+					std::cerr << "Erreur lors du send() sur le fd " << client->GetFd() << std::endl;
 				}
 			}
 		}
