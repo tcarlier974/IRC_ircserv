@@ -6,7 +6,7 @@
 /*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/26 12:58:55 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/26 13:18:01 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -297,6 +297,43 @@ void Server::ParseMessage(std::string message, Client *client)
         
         return;
     }
+	else if (command == "JOIN")
+	{
+		std::string channelName;
+		iss >> channelName;
+
+		if (!channelName.empty())
+		{
+			Channel *channel = NULL;
+			for (std::vector<Channel>::iterator it = _Channels.begin(); it != _Channels.end(); ++it)
+			{
+				if (it->GetName() == channelName)
+				{
+					channel = &(*it);
+					break;
+				}
+			}
+
+			if (!channel)
+			{
+				_Channels.push_back(Channel(channelName));
+				channel = &_Channels.back();
+			}
+
+			channel->AddMember(client);
+			std::string joinMsg = ":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " JOIN :" + channelName + "\r\n";
+			channel->BroadcastMessage(joinMsg);
+			
+			// 2. On envoie la liste des noms au client qui vient de rejoindre (RPL_NAMREPLY)
+            // Pour l'instant on triche un peu en n'envoyant que son propre nom pour débloquer l'interface client
+			std::string rpl_namreply = ":127.0.0.1 353 " + client->GetNickname() + " = " + channelName + " :@" + client->GetNickname() + "\r\n";
+            client->AppendOutBuffer(rpl_namreply);
+
+            // 3. On annonce la fin de la liste des noms (RPL_ENDOFNAMES)
+            std::string rpl_endofnames = ":127.0.0.1 366 " + client->GetNickname() + " " + channelName + " :End of /NAMES list.\r\n";
+            client->AppendOutBuffer(rpl_endofnames);
+		}
+	}
     if (client->GetAuth() && !client->GetNickname().empty() && !client->GetUsername().empty() && !client->GetRegistered())
     {
         client->SetRegistered(true);

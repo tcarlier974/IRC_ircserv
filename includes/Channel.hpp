@@ -20,6 +20,7 @@ class Channel
         ~Channel();
 
         std::string GetName() const;
+		std::string GetMemberList();
         
         void AddMember(Client *client);
         void RemoveMember(Client *client);
