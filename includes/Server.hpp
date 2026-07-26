@@ -6,7 +6,7 @@
 /*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/10 15:49:53 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/26 10:06:17 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/26 12:59:31 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 # define SERVER_HPP
 
 # include "Client.hpp"
+# include "Channel.hpp"
 
 class Server
 {
@@ -26,7 +27,7 @@ class Server
 		std::vector< struct pollfd > _fds;
 		int	_NextChannelId;
 		std::string _hostName;
-		// std::vector< Channel > _Channels;
+		std::vector< Channel > _Channels;
 		std::set< std::string > _ClientNames;
 		std::set< std::string > _Topics;
 		// std::vector< Parser > _parsedMessages;
