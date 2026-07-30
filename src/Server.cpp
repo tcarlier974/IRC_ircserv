@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/26 13:40:10 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/30 18:11:14 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -233,6 +233,7 @@ void Server::ParseMessage(std::string message, Client *client)
         if (!client->GetNickname().empty())
             _ClientNames.erase(client->GetNickname());
 
+		client->AppendOutBuffer(":" + client->GetNickname() + " NICK :" + nickname + "\r\n");
         client->SetNickname(nickname);
         _ClientNames.insert(nickname);
     }
