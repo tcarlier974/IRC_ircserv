@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/30 18:35:29 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/30 20:41:17 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -213,12 +213,14 @@ void Server::ParseMessage(std::string message, Client *client)
             client->AppendOutBuffer("CAP * LS :\r\n");
         }
     }
-    else if (command == "PASS")
+    else if (command == "PASS" || command == "pass")
     {
         std::string password;
         iss >> password;
-        if (password == this->_Password)
-            client->SetAuth(true);
+        if (password == this->_Password){
+            client->SetRegistered(true);
+			client->SetAuth(true);
+		}
     }
     else if (command == "NICK")
     {
@@ -323,6 +325,11 @@ void Server::ParseMessage(std::string message, Client *client)
 		std::string channelName;
 		iss >> channelName;
 
+		if(!client->GetRegistered())
+		{
+			client->AppendOutBuffer(":ircserv 451 " + client->GetNickname() + " :You have not registered\r\n");
+			return;
+		}
 		if (!channelName.empty())
 		{
 			if (channelName[0] != '#')
@@ -387,7 +394,7 @@ void Server::ParseMessage(std::string message, Client *client)
 					if (text[0] == ':')
 						text = text.substr(1);
 					channel->SetTopic(text);
-					client->AppendOutBuffer(":ircserv 332 " + client->GetNickname() + " " + channelName + " :" + channel->GetTopic() + "\r\n");
+					client->AppendOutBuffer(":ircserv 332 " + client->GetNickname() + " has changed the topic to" + " :" + channel->GetTopic() + "\r\n");
 				}
 				else if (!channel->GetTopic().empty())
 				{
