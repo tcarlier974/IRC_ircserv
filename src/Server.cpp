@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/30 18:11:14 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/30 18:35:29 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -354,6 +354,54 @@ void Server::ParseMessage(std::string message, Client *client)
 
             std::string rpl_endofnames = ":127.0.0.1 366 " + client->GetNickname() + " " + channelName + " :End of /NAMES list.\r\n";
             client->AppendOutBuffer(rpl_endofnames);
+		}
+	}
+	else if (command == "TOPIC")
+	{
+		std::string channelName;
+		iss >> channelName;
+		std::string text;
+
+		if (!channelName.empty())
+		{
+			if (channelName[0] != '#')
+			{
+				channelName = "#" + channelName;
+			}
+			Channel *channel = NULL;
+			for (std::vector<Channel>::iterator it = _Channels.begin(); it != _Channels.end(); ++it)
+			{
+				if (it->GetName() == channelName)
+				{
+					channel = &(*it);
+					break;
+				}
+			}
+
+			if (channel)
+			{
+				if (getline(iss, text) && !text.empty())
+				{
+					if (text[0] == ' ')
+						text = text.substr(1);
+					if (text[0] == ':')
+						text = text.substr(1);
+					channel->SetTopic(text);
+					client->AppendOutBuffer(":ircserv 332 " + client->GetNickname() + " " + channelName + " :" + channel->GetTopic() + "\r\n");
+				}
+				else if (!channel->GetTopic().empty())
+				{
+					client->AppendOutBuffer(":ircserv 332 " + client->GetNickname() + " " + channelName + " :" + channel->GetTopic() + "\r\n");
+				}
+				else
+				{
+					client->AppendOutBuffer(":ircserv 331 " + client->GetNickname() + " " + channelName + " :No topic is set\r\n");
+				}
+			}
+			else
+			{
+				client->AppendOutBuffer(":ircserv 403 " + client->GetNickname() + " " + channelName + " :No such channel\r\n");
+			}
 		}
 	}
     if (client->GetAuth() && !client->GetNickname().empty() && !client->GetUsername().empty() && !client->GetRegistered())

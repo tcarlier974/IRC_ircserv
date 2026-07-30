@@ -24,6 +24,9 @@ class Channel
         
         void AddMember(Client *client);
         void RemoveMember(Client *client);
+
+        void SetTopic(std::string topic);
+        std::string GetTopic() const;
         
         void BroadcastMessage(std::string message, Client *exclude = NULL);
 };

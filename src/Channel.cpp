@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/26 13:06:15 by igilbert          #+#    #+#             */
-/*   Updated: 2026/07/26 13:47:32 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/30 18:30:58 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,4 +66,14 @@ std::string Channel::GetMemberList()
         list += (*it)->GetNickname() + " ";
     }
     return list;
+}
+
+void Channel::SetTopic(std::string topic)
+{
+	_topic = topic;
+}
+
+std::string Channel::GetTopic() const
+{
+	return _topic;
 }
