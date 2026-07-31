@@ -6,7 +6,7 @@
 /*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/26 13:06:15 by igilbert          #+#    #+#             */
-/*   Updated: 2026/07/31 10:38:22 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/31 10:45:13 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -104,7 +104,17 @@ bool Channel::IsOPbyNick(std::string nick)
 	return false;
 }
 
-void Channel::SetOP(Client *client)
+void Channel::SetOP(std::string nick)
 {
-	_operators.push_back(client);
+	if (!GetMemberList().find(nick) == std::string::npos)
+		return;
+	for (std::vector<Client*>::iterator it = this->_members.begin(); it != this->_members.end(); ++it)
+	{
+		if ((*it)->GetNickname() == nick)
+		{
+			if (std::find(this->_operators.begin(), this->_operators.end(), *it) == this->_operators.end())
+				this->_operators.push_back(*it);
+			break;
+		}
+	}
 }

@@ -12,6 +12,7 @@ class Channel
         std::string _topic;
         std::vector<Client*> _members;
         std::vector<Client*> _operators;
+		int Nuser;
 
     public:
         Channel(std::string name);
@@ -27,6 +28,9 @@ class Channel
 
         void SetTopic(std::string topic);
         std::string GetTopic() const;
+
+		bool IsOPbyNick(std::string nick);
+		void SetOP(std::string nick);
         
         void BroadcastMessage(std::string message, Client *exclude = NULL);
 };
