@@ -6,15 +6,15 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/26 13:06:15 by igilbert          #+#    #+#             */
-/*   Updated: 2026/07/31 13:37:16 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/31 14:37:35 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Channel.hpp"
 
-Channel::Channel(std::string name) : _name(name), _topic(""), _members(), _operators(), Nuser(0) {}
+Channel::Channel(std::string name) : _name(name), _topic(""), _members(), _operators(), _invited(), _inv_only(false), Nuser(0) {}
 
-Channel::Channel(const Channel &other) : _name(other._name), _topic(other._topic), _members(other._members), _operators(other._operators), Nuser(other.Nuser) {}
+Channel::Channel(const Channel &other) : _name(other._name), _topic(other._topic), _members(other._members), _operators(other._operators), _invited(other._invited), _inv_only(other._inv_only), Nuser(other.Nuser) {}
 
 Channel &Channel::operator=(const Channel &other)
 {
@@ -24,6 +24,8 @@ Channel &Channel::operator=(const Channel &other)
 		_topic = other._topic;
 		_members = other._members;
 		_operators = other._operators;
+		_invited = other._invited;
+		_inv_only = other._inv_only;
 		Nuser = other.Nuser;
 	}
 	return *this;
@@ -95,6 +97,27 @@ void Channel::SetTopic(std::string topic)
 std::string Channel::GetTopic() const
 {
 	return _topic;
+}
+
+void Channel::SetInvOnly(bool inv_only)
+{
+	_inv_only = inv_only;
+}
+
+bool Channel::getInv_only() const
+{
+	return _inv_only;
+}
+
+std::vector<Client*> Channel::GetInvited() const
+{
+	return _invited;
+}
+
+void Channel::setInvited(Client *client)
+{
+	if (std::find(_invited.begin(), _invited.end(), client) == _invited.end())
+		_invited.push_back(client);
 }
 
 bool Channel::IsOPbyNick(std::string nick)

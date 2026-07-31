@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/31 13:40:56 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/31 14:37:18 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,10 +45,13 @@ Server::Server(char **av) :
 
 void Server::CloseChannel(Channel *channel)
 {
-	std::vector<Channel>::iterator it = std::find(_Channels.begin(), _Channels.end(), *channel);
-	if (it != _Channels.end())
+	for (std::vector<Channel>::iterator it = _Channels.begin(); it != _Channels.end(); ++it)
 	{
-		_Channels.erase(it);
+		if (&(*it) == channel)
+		{
+			_Channels.erase(it);
+			break;
+		}
 	}
 }
 
@@ -369,7 +372,11 @@ void Server::ParseMessage(std::string message, Client *client)
 				_Channels.push_back(Channel(channelName));
 				channel = &_Channels.back();
 			}
-
+			if (channel->getInv_only() && channel->GetInvited().size() > 0 && std::find(channel->GetInvited().begin(), channel->GetInvited().end(), client) == channel->GetInvited().end())
+			{
+				client->AppendOutBuffer(":ircserv 473 " + client->GetNickname() + " " + channelName + " :Cannot join channel (+i)\r\n");
+				return;
+			}
 			channel->AddMember(client);
 			std::string joinMsg = ":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " JOIN :" + channelName + "\r\n";
 			channel->BroadcastMessage(joinMsg);
@@ -429,6 +436,77 @@ void Server::ParseMessage(std::string message, Client *client)
 			}
 		}
 	}
+	else if (command == "INVITE")
+	{
+		if (!client->GetRegistered())
+		{
+			client->AppendOutBuffer(":ircserv 451 " + client->GetNickname() + " :You have not registered\r\n");
+			return;
+		}
+		std::string targetNick, channelName;
+		iss >> targetNick >> channelName;
+		if (targetNick.empty() || channelName.empty())
+		{
+			client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " INVITE :Not enough parameters\r\n");
+			return;
+		}
+		if (channelName[0] != '#')
+		{
+			channelName = "#" + channelName;
+		}
+		Channel *channel = NULL;
+		for (std::vector<Channel>::iterator it = _Channels.begin(); it != _Channels.end(); ++it)
+		{
+			if (it->GetName() == channelName)
+			{
+				channel = &(*it);
+				break;
+			}
+		}
+		channel->setInvited(client);
+		channel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " INVITE " + targetNick + " :" + channelName + "\r\n");
+		client->AppendOutBuffer(":ircserv 341 " + client->GetNickname() + " " + targetNick + " :" + channelName + "\r\n");
+	}
+	else if (command == "NOTICE")
+    {
+		std::string target, text;
+		iss >> target;
+		std::getline(iss, text);
+		
+		if (!text.empty() && text[0] == ' ') text = text.substr(1);
+		if (!text.empty() && text[0] == ':') text = text.substr(1);
+
+		// channel
+		if (target[0] == '#') 
+		{
+			Channel *targetChannel = NULL;
+			for (std::vector<Channel>::iterator it = _Channels.begin(); it != _Channels.end(); ++it)
+			{
+				if (it->GetName() == target)
+				{
+					targetChannel = &(*it);
+					break;
+				}
+			}
+
+			if (targetChannel)
+			{
+				std::string msg = ":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " NOTICE " + target + " :" + text + "\r\n";
+				targetChannel->BroadcastMessage(msg, client);
+			}
+		}
+		else 
+		{
+			Client *targetClient = getClientByNick(target);
+			if (targetClient)
+			{
+				std::string msg = ":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " NOTICE " + target + " :" + text + "\r\n";
+				targetClient->AppendOutBuffer(msg);
+				
+				std::cout << "Message routé de " << client->GetNickname() << " vers " << target << std::endl;
+			}
+		}
+    }
 	else if (command == "PART")
 	{
 		std::string channelName;
