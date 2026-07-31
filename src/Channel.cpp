@@ -3,18 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/26 13:06:15 by igilbert          #+#    #+#             */
-/*   Updated: 2026/07/31 11:12:12 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/31 11:33:23 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Channel.hpp"
 
-Channel::Channel(std::string name) : _name(name), _topic(""), _members(), _operators() {}
+Channel::Channel(std::string name) : _name(name), _topic(""), _members(), _operators(), Nuser(0) {}
 
-Channel::Channel(const Channel &other) : _name(other._name), _topic(other._topic), _members(other._members), _operators(other._operators) {}
+Channel::Channel(const Channel &other) : _name(other._name), _topic(other._topic), _members(other._members), _operators(other._operators), Nuser(other.Nuser) {}
 
 Channel &Channel::operator=(const Channel &other)
 {
@@ -24,6 +24,7 @@ Channel &Channel::operator=(const Channel &other)
 		_topic = other._topic;
 		_members = other._members;
 		_operators = other._operators;
+		Nuser = other.Nuser;
 	}
 	return *this;
 }
@@ -50,6 +51,8 @@ void Channel::AddMember(Client *client)
 void Channel::RemoveMember(Client *client)
 {
 	_members.erase(std::remove(_members.begin(), _members.end(), client), _members.end());
+	_operators.erase(std::remove(_operators.begin(), _operators.end(), client), _operators.end());
+	Nuser--;
 }
 
 void Channel::BroadcastMessage(std::string message, Client *exclude)
