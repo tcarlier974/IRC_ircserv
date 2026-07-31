@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/31 13:16:57 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/31 13:39:48 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -419,6 +419,65 @@ void Server::ParseMessage(std::string message, Client *client)
 				client->AppendOutBuffer(":ircserv 403 " + client->GetNickname() + " " + channelName + " :No such channel\r\n");
 			}
 		}
+	}
+	else if (command == "PART")
+	{
+		std::string channelName;
+		iss >> channelName;
+
+		if (!channelName.empty())
+		{
+			if (channelName[0] != '#')
+			{
+				channelName = "#" + channelName;
+			}
+			Channel *channel = NULL;
+			for (std::vector<Channel>::iterator it = _Channels.begin(); it != _Channels.end(); ++it)
+			{
+				if (it->GetName() == channelName)
+				{
+					channel = &(*it);
+					break;
+				}
+			}
+
+			if (channel)
+			{
+				channel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " PART :" + channelName + "\r\n");
+				channel->RemoveMember(client);
+			}
+			else
+			{
+				client->AppendOutBuffer(":ircserv 403 " + client->GetNickname() + " " + channelName + " :No such channel\r\n");
+			}
+		}
+	}
+	else if (command == "KICK")
+	{
+		if (!client->GetRegistered())
+		{
+			client->AppendOutBuffer(":ircserv 451 " + client->GetNickname() + " :You have not registered\r\n");
+			return;
+		}
+		std::string channelName, targetNick, reason;
+		iss >> channelName >> targetNick;
+		std::getline(iss, reason);
+		Channel *channel = NULL;
+		for (std::vector<Channel>::iterator it = _Channels.begin(); it != _Channels.end(); ++it)
+		{
+			if (it->GetName() == channelName)
+			{
+				channel = &(*it);
+				break;
+			}
+		}
+		if (!channel->IsOPbyNick(client->GetNickname()))
+		{
+			client->AppendOutBuffer(":ircserv 482 " + client->GetNickname() + " :You're not a channel operator\r\n");
+			return;
+		}
+		channel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " KICK " + channelName + " " + targetNick + reason + "\r\n");
+		channel->RemoveMember(getClientByNick(targetNick));
 	}
 	else if (command == "MODE")
 	{

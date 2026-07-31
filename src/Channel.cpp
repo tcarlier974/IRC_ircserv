@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/26 13:06:15 by igilbert          #+#    #+#             */
-/*   Updated: 2026/07/31 13:14:06 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/31 13:37:16 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -124,11 +124,6 @@ bool Channel::SetOP(std::string nick)
 
 bool Channel::DeOP(std::string nick)
 {
-	if ((int)_operators.size() == 1)
-	{
-		BroadcastMessage(":ircserv 482 " + nick + " " + this->_name + " :Cannot remove the last operator from the channel\r\n");
-		return false;
-	}
 	for (std::vector<Client*>::iterator it = this->_members.begin(); it != this->_members.end(); ++it)
 	{
 		if ((*it)->GetNickname() == nick)
