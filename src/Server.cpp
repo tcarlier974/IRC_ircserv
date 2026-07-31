@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/31 12:03:09 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/31 12:56:54 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -468,7 +468,7 @@ void Server::ParseMessage(std::string message, Client *client)
 				count++;
 				iss >> mode;
 			}
-			(void)count; // Pour éviter l'avertissement de variable non utilisée
+			(void)count;
 			char sign = '+';
 			for (std::vector<std::string>::iterator it = modes.begin(); it != modes.end(); ++it)
 			{
@@ -487,17 +487,14 @@ void Server::ParseMessage(std::string message, Client *client)
 						{
 							targetChannel->SetOP(argIt->c_str());
 							printf("Client %s is now an operator in channel %s\n", argIt->c_str(), channel.c_str());
-							client->AppendOutBuffer(":ircserv 324 " + client->GetNickname() + " " + channel + " +o\r\n");
-							std::string rpl_namreply = ":ircserv 353 " + client->GetNickname() + " = " + targetChannel->GetName() + " :" + targetChannel->GetMemberList() + "\r\n";
-							client->AppendOutBuffer(rpl_namreply);
-							std::string rpl_endofnames = ":ircserv 366 " + client->GetNickname() + " " + targetChannel->GetName() + " :End of /NAMES list.\r\n";
-							client->AppendOutBuffer(rpl_endofnames);
+							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "+o " + argIt->c_str() + "\r\n");
+							argIt++;
 						}
 						else
 						{
-							targetChannel->DeOP(client);
+							targetChannel->DeOP(argIt->c_str());
+							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-o " + argIt->c_str() + "\r\n");
 							argIt++;
-							client->AppendOutBuffer(":ircserv 324 " + client->GetNickname() + " " + channel + " -o\r\n");
 						}
 						break;
 					default:
