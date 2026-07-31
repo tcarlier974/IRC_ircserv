@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/26 13:06:15 by igilbert          #+#    #+#             */
-/*   Updated: 2026/07/31 14:59:38 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/31 18:01:40 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,7 +91,7 @@ void Channel::RemoveMember(Client *client)
 
 void Channel::BroadcastMessage(std::string message, Client *exclude)
 {
-	for (std::vector<Client*>::iterator it = _members.begin(); it != _members.end(); ++it)
+	for (std::vector<Client *>::iterator it = _members.begin(); it != _members.end(); ++it)
 	{
 		if (*it != exclude)
 		{
@@ -102,23 +102,23 @@ void Channel::BroadcastMessage(std::string message, Client *exclude)
 
 std::string Channel::GetMemberList()
 {
-    std::string list = "";
-    for (std::vector<Client*>::iterator it = _members.begin(); it != _members.end(); ++it)
-    { 
-        bool isOP = false;
-		for (std::vector<Client*>::iterator opIt = _operators.begin(); opIt != _operators.end(); ++opIt)
-        {
-            if (*it == *opIt)
-            {
-                isOP = true;
-                break;
-            }
-        }
+	std::string list = "";
+	for (std::vector<Client *>::iterator it = _members.begin(); it != _members.end(); ++it)
+	{
+		bool isOP = false;
+		for (std::vector<Client *>::iterator opIt = _operators.begin(); opIt != _operators.end(); ++opIt)
+		{
+			if (*it == *opIt)
+			{
+				isOP = true;
+				break;
+			}
+		}
 		if (isOP)
 			list += "@";
-        list += (*it)->GetNickname() + " ";
-    }
-    return list;
+		list += (*it)->GetNickname() + " ";
+	}
+	return list;
 }
 
 void Channel::SetTopic(std::string topic)
@@ -151,7 +151,7 @@ bool Channel::getTopicOnlyOP() const
 	return _topic_onlyOP;
 }
 
-std::vector<Client*> Channel::GetInvited() const
+std::vector<Client *> Channel::GetInvited() const
 {
 	return _invited;
 }
@@ -164,7 +164,7 @@ void Channel::setInvited(Client *client)
 
 bool Channel::IsOPbyNick(std::string nick)
 {
-	for (std::vector<Client*>::iterator opIt = this->_operators.begin(); opIt != this->_operators.end(); ++opIt)
+	for (std::vector<Client *>::iterator opIt = this->_operators.begin(); opIt != this->_operators.end(); ++opIt)
 	{
 		if ((*opIt)->GetNickname() == nick)
 			return true;
@@ -174,7 +174,7 @@ bool Channel::IsOPbyNick(std::string nick)
 
 bool Channel::SetOP(std::string nick)
 {
-	for (std::vector<Client*>::iterator it = this->_members.begin(); it != this->_members.end(); ++it)
+	for (std::vector<Client *>::iterator it = this->_members.begin(); it != this->_members.end(); ++it)
 	{
 		if ((*it)->GetNickname() == nick)
 		{
@@ -189,10 +189,10 @@ bool Channel::SetOP(std::string nick)
 
 bool Channel::DeOP(std::string nick)
 {
-	for (std::vector<Client*>::iterator it = this->_members.begin(); it != this->_members.end(); ++it)
+	for (std::vector<Client *>::iterator it = this->_members.begin(); it != this->_members.end(); ++it)
 	{
 		if ((*it)->GetNickname() == nick)
-		{	
+		{
 			_operators.erase(std::remove(_operators.begin(), _operators.end(), *it), _operators.end());
 			break;
 		}

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:16:37 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/26 11:13:09 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/31 18:01:28 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,42 +14,42 @@
 
 Client::~Client() {}
 
-Client::Client() 
-    :
-    _Fd(-1),
-    _ipAddress(""),
-    _username(""),
-    _nickname(""),
-    _hostname(""),
-	_password(""),
-	_registered(false),
-    _isAuth(false),
-    _isLog(false),
-    _buffer("")
-{}
+Client::Client()
+    : _Fd(-1),
+      _ipAddress(""),
+      _username(""),
+      _nickname(""),
+      _hostname(""),
+      _password(""),
+      _registered(false),
+      _isAuth(false),
+      _isLog(false),
+      _buffer("")
+{
+}
 
-Client::Client(std::string IPadd) 
-    :
-	_Fd(-1),
-    _ipAddress(IPadd),
-    _username(""),
-	_nickname(""),
-	_hostname(""),
-    _password(""),
-	_registered(false),
-    _isAuth(false),
-    _isLog(false),
-    _buffer("")
-{}
+Client::Client(std::string IPadd)
+    : _Fd(-1),
+      _ipAddress(IPadd),
+      _username(""),
+      _nickname(""),
+      _hostname(""),
+      _password(""),
+      _registered(false),
+      _isAuth(false),
+      _isLog(false),
+      _buffer("")
+{
+}
 
-Client::Client(const Client &other) 
+Client::Client(const Client &other)
 {
     *this = other;
 }
 
-Client &Client::operator=(const Client &other) 
+Client &Client::operator=(const Client &other)
 {
-    if (this != &other) 
+    if (this != &other)
     {
         this->_Fd = other._Fd;
         this->_ipAddress = other._ipAddress;
@@ -122,7 +122,7 @@ std::string Client::GetIPadd(void)
 std::string Client::GetUsername(void)
 {
     return this->_username;
-}               
+}
 
 std::string Client::GetNickname(void)
 {

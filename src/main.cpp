@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/10 16:02:10 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/26 15:27:30 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/31 18:26:18 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ int main(int ac, char **av)
 	if (ac != 3)
 	{
 		std::cout << "Usage : ./ircserv [Port] [Password]" << std::endl;
-		return(0);
+		return (0);
 	}
 	Server server(av);
 	try
@@ -25,10 +25,11 @@ int main(int ac, char **av)
 		signal(SIGINT, Server::SigHandler);
 		signal(SIGQUIT, Server::SigHandler);
 		server.ServerInit();
-		while(!server.getSig())
+		while (!server.getSig())
 		{
 			server.run();
 		}
+		
 	}
 	catch (const std::exception &e)
 	{

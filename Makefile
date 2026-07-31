@@ -6,7 +6,7 @@ SRC = src/main.cpp \
 
 NAME = ircserv
 CC = c++
-CFLAGS = -std=c++98 -Wall -Wextra -Werror
+CFLAGS = -g -std=c++98 -Wall -Wextra -Werror
 OBJ = $(SRC:.cpp=.o)
 
 all : $(NAME)
