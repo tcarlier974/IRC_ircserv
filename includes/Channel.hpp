@@ -13,6 +13,8 @@ class Channel
         std::vector<Client*> _members;
         std::vector<Client*> _operators;
 		int Nuser;
+		std::string _password;
+		int			_limit;
 
     public:
         Channel(std::string name);
@@ -23,7 +25,7 @@ class Channel
         std::string GetName() const;
 		std::string GetMemberList();
         
-        void AddMember(Client *client);
+        void AddMember(Client *client, std::string pass = "");
         void RemoveMember(Client *client);
 
         void SetTopic(std::string topic);
@@ -32,6 +34,11 @@ class Channel
 		bool IsOPbyNick(std::string nick);
 		bool SetOP(std::string nick);
 		bool DeOP(std::string nick);
+		void SetPassword(std::string pass);
+		void SetLimit(int limit);
+		int GetLimit() const;
+
+		bool CheckPassword(std::string pass) const;
         
         void BroadcastMessage(std::string message, Client *exclude = NULL);
 };

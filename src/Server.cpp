@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/31 13:40:56 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/31 14:31:09 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,15 +41,6 @@ Server::Server(char **av) :
 {
 		_Port = setPort(av[1]);
 		_Password = setPassword(av[2]);
-}
-
-void Server::CloseChannel(Channel *channel)
-{
-	std::vector<Channel>::iterator it = std::find(_Channels.begin(), _Channels.end(), *channel);
-	if (it != _Channels.end())
-	{
-		_Channels.erase(it);
-	}
 }
 
 Server::Server(const Server &other)
@@ -341,8 +332,9 @@ void Server::ParseMessage(std::string message, Client *client)
 	else if (command == "JOIN")
 	{
 		std::string channelName;
+		std::string key = "";
 		iss >> channelName;
-
+		if (iss >> key){}
 		if(!client->GetRegistered())
 		{
 			client->AppendOutBuffer(":ircserv 451 " + client->GetNickname() + " :You have not registered\r\n");
@@ -369,8 +361,8 @@ void Server::ParseMessage(std::string message, Client *client)
 				_Channels.push_back(Channel(channelName));
 				channel = &_Channels.back();
 			}
-
-			channel->AddMember(client);
+			
+			channel->AddMember(client, key);
 			std::string joinMsg = ":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " JOIN :" + channelName + "\r\n";
 			channel->BroadcastMessage(joinMsg);
 			
@@ -546,8 +538,8 @@ void Server::ParseMessage(std::string message, Client *client)
 					sign = (*it)[0];
 					(*it) = (*it).substr(1);
 				}
-				printf("Mode: %s, Sign: %c\n", (*it).c_str(), sign);
-				printf("Arg: %s\n", argIt->c_str());
+				// printf("Mode: %s, Sign: %c\n", (*it).c_str(), sign);
+				// printf("Arg: %s\n", argIt->c_str());
 				switch ((*it)[0])
 				{
 					case 'o':
@@ -564,9 +556,58 @@ void Server::ParseMessage(std::string message, Client *client)
 							argIt++;
 						}
 						break;
+					case 'k':
+						if (sign == '+' && targetChannel->CheckPassword(""))
+						{
+							targetChannel->SetPassword(argIt->c_str());
+							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "+k " + argIt->c_str() + "\r\n");
+							argIt++;
+						}
+						else if (sign == '-' && !targetChannel->CheckPassword(""))
+						{
+							targetChannel->SetPassword("");
+							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-k\r\n");
+							argIt++;
+						}
+						else if (sign == '+' && !targetChannel->CheckPassword(""))
+						{
+							client->AppendOutBuffer(":ircserv 467 " + client->GetNickname() + " " + channel + " :Channel key already set\r\n");
+							argIt++;
+						}
+						else if (sign == '-' && targetChannel->CheckPassword(""))
+						{
+							client->AppendOutBuffer(":ircserv 467 " + client->GetNickname() + " " + channel + " :No channel key is set\r\n");
+							argIt++;
+						}
+						break;
+					case 'l':
+						if (sign == '+')
+						{
+							int limit = atoi(argIt->c_str());
+							if (limit >= 0)
+							{
+								targetChannel->SetLimit(limit);
+								targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "+l " + argIt->c_str() + "\r\n");
+							}
+							else
+							{
+								client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :Not enough parameters\r\n");
+							}
+							argIt++;
+						}
+						else if (sign == '-' && targetChannel->GetLimit() != -1)
+						{
+							targetChannel->SetLimit(-1);
+							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-l\r\n");
+						}
+						else if (sign == '-' && targetChannel->GetLimit() == -1)
+						{
+							client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :No limit is set\r\n");
+						}
+						break;
 					default:
 						client->AppendOutBuffer(":ircserv 472 " + client->GetNickname() + " " + (*it) + " :is unknown mode char to me\r\n");
-						break;
+					break;
 				}
 			}
 		}
@@ -585,6 +626,7 @@ void Server::ParseMessage(std::string message, Client *client)
 		client->AppendOutBuffer(":ircserv 451 " + client->GetNickname() + " :You have not registered\r\n");
 	}
 }
+
 
 Client	*Server::getClientByFd(int fd)
 {

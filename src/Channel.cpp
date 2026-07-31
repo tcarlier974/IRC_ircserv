@@ -3,18 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/26 13:06:15 by igilbert          #+#    #+#             */
-/*   Updated: 2026/07/31 13:37:16 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/31 14:31:53 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Channel.hpp"
 
-Channel::Channel(std::string name) : _name(name), _topic(""), _members(), _operators(), Nuser(0) {}
+Channel::Channel(std::string name) : _name(name), _topic(""), _members(), _operators(), Nuser(0), _password(""), _limit(-1) {}
 
-Channel::Channel(const Channel &other) : _name(other._name), _topic(other._topic), _members(other._members), _operators(other._operators), Nuser(other.Nuser) {}
+Channel::Channel(const Channel &other) : _name(other._name), _topic(other._topic), _members(other._members), _operators(other._operators), Nuser(other.Nuser), _password(other._password), _limit(other._limit) {}
 
 Channel &Channel::operator=(const Channel &other)
 {
@@ -25,6 +25,8 @@ Channel &Channel::operator=(const Channel &other)
 		_members = other._members;
 		_operators = other._operators;
 		Nuser = other.Nuser;
+		_password = other._password;
+		_limit = other._limit;
 	}
 	return *this;
 }
@@ -36,8 +38,38 @@ std::string Channel::GetName() const
 	return _name;
 }
 
-void Channel::AddMember(Client *client)
+void Channel::SetPassword(std::string pass)
 {
+	_password = pass;
+}
+
+void Channel::SetLimit(int limit)
+{
+	_limit = limit;
+}
+
+int Channel::GetLimit() const
+{
+	return _limit;
+}
+
+bool Channel::CheckPassword(std::string pass) const
+{
+	return (pass == _password);
+}
+
+void Channel::AddMember(Client *client, std::string pass)
+{
+	if (!_password.empty() && !CheckPassword(pass))
+	{
+		client->AppendOutBuffer(":ircserv 475 " + client->GetNickname() + " " + _name + " :Cannot join channel (+k) - incorrect key\r\n");
+		return;
+	}
+	if (_limit >= 0 && Nuser >= _limit)
+	{
+		client->AppendOutBuffer(":ircserv 471 " + client->GetNickname() + " " + _name + " :Cannot join channel (+l) - channel is full\r\n");
+		return;
+	}
 	if (_members.empty() && _operators.empty())
 	{
 		_operators.push_back(client);
@@ -45,7 +77,6 @@ void Channel::AddMember(Client *client)
 	if (std::find(_members.begin(), _members.end(), client) == _members.end())
 		_members.push_back(client);
 	Nuser++;
-	std::cout << "number of users: " << Nuser << std::endl;
 }
 
 void Channel::RemoveMember(Client *client)
