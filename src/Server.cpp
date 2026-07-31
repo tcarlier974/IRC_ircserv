@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/31 08:48:32 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/31 11:04:50 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -428,8 +428,69 @@ void Server::ParseMessage(std::string message, Client *client)
 				break;
 			}
 		}
-		if (targetChannel->GetMemberList().find(client->GetNickname()))
+		if (targetChannel->GetMemberList().find(client->GetNickname()) == std::string::npos)
 		{
+			client->AppendOutBuffer(":ircserv 482 " + client->GetNickname() + " " + channel + " :You're not a member of that channel\r\n");
+			return;
+		}
+		if (targetChannel->IsOPbyNick(client->GetNickname()) == false)
+		{
+			client->AppendOutBuffer(":ircserv 482 " + client->GetNickname() + " " + channel + " :You're not a channel operator\r\n");
+			return;
+		}
+		else
+		{
+			std::string mode;
+			iss >> mode;
+			std::vector<std::string> modes;
+			while (iss && (mode[0] == '+' || mode[0] == '-'))
+			{
+				if (!mode.empty())
+					modes.push_back(mode);
+				iss >> mode;
+			}
+			int count = 0;
+			std::vector<std::string> args;
+			while (iss)
+			{
+				std::string arg;
+				iss >> arg;
+				if (!arg.empty())
+					args.push_back(arg);
+				count++;
+			}
+			(void)count; // Pour éviter l'avertissement de variable non utilisée
+			char sign = '+';
+			for (std::vector<std::string>::iterator it = modes.begin(); it != modes.end(); ++it)
+			{
+				std::vector<std::string>::iterator argIt = args.begin();
+				if ((*it)[0] == '+' || (*it)[0] == '-')
+				{
+					sign = (*it)[0];
+					(*it) = (*it).substr(1);
+				}
+				printf("Mode: %s, Sign: %c\n", (*it).c_str(), sign);
+				switch ((*it)[0])
+				{
+					case 'o':
+						if (sign == '+')
+						{
+							targetChannel->SetOP(argIt->c_str());
+							printf("Client %s is now an operator in channel %s\n", argIt->c_str(), channel.c_str());
+							client->AppendOutBuffer(":ircserv 324 " + client->GetNickname() + " " + channel + " +o\r\n");
+						}
+						else
+						{
+							targetChannel->RemoveMember(client);
+							argIt++;
+							client->AppendOutBuffer(":ircserv 324 " + client->GetNickname() + " " + channel + " -o\r\n");
+						}
+						break;
+					default:
+						client->AppendOutBuffer(":ircserv 472 " + client->GetNickname() + " " + (*it) + " :is unknown mode char to me\r\n");
+						break;
+				}
+			}
 		}
 	}
     if (!client->GetNickname().empty() && !client->GetUsername().empty() && client->GetRegistered() && !client->GetLog())

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/10 14:51:49 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/26 11:13:32 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/31 10:11:44 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
