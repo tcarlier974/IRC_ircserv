@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/30 20:41:17 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/31 08:48:32 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -210,7 +210,7 @@ void Server::ParseMessage(std::string message, Client *client)
         iss >> subCommand;
         if (subCommand == "LS")
         {
-            client->AppendOutBuffer("CAP * LS :\r\n");
+            // client->AppendOutBuffer("CAP * LS :\r\n");
         }
     }
     else if (command == "PASS" || command == "pass")
@@ -219,7 +219,6 @@ void Server::ParseMessage(std::string message, Client *client)
         iss >> password;
         if (password == this->_Password){
             client->SetRegistered(true);
-			client->SetAuth(true);
 		}
     }
     else if (command == "NICK")
@@ -284,7 +283,7 @@ void Server::ParseMessage(std::string message, Client *client)
 			}
 			else
 			{
-				client->AppendOutBuffer(":127.0.0.1 401 " + client->GetNickname() + " " + target + " :No such nick/channel\r\n");
+				client->AppendOutBuffer(":ircserv 401 " + client->GetNickname() + " " + target + " :No such nick/channel\r\n");
 			}
 		}
 		// private msg
@@ -356,10 +355,10 @@ void Server::ParseMessage(std::string message, Client *client)
 			std::string joinMsg = ":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " JOIN :" + channelName + "\r\n";
 			channel->BroadcastMessage(joinMsg);
 			
-			std::string rpl_namreply = ":127.0.0.1 353 " + client->GetNickname() + " = " + channelName + " :" + channel->GetMemberList() + "\r\n";
+			std::string rpl_namreply = ":ircserv 353 " + client->GetNickname() + " = " + channelName + " :" + channel->GetMemberList() + "\r\n";
     		client->AppendOutBuffer(rpl_namreply);
 
-            std::string rpl_endofnames = ":127.0.0.1 366 " + client->GetNickname() + " " + channelName + " :End of /NAMES list.\r\n";
+            std::string rpl_endofnames = ":ircserv 366 " + client->GetNickname() + " " + channelName + " :End of /NAMES list.\r\n";
             client->AppendOutBuffer(rpl_endofnames);
 		}
 	}
@@ -411,9 +410,30 @@ void Server::ParseMessage(std::string message, Client *client)
 			}
 		}
 	}
-    if (client->GetAuth() && !client->GetNickname().empty() && !client->GetUsername().empty() && !client->GetRegistered())
+	else if (command == "MODE")
+	{
+		if (!client->GetRegistered())
+		{
+			client->AppendOutBuffer(":ircserv 451 " + client->GetNickname() + " :You have not registered\r\n");
+			return;
+		}
+		std::string channel;
+		iss >> channel;
+		Channel *targetChannel = NULL;
+		for (std::vector<Channel>::iterator it = _Channels.begin(); it != _Channels.end(); ++it)
+		{
+			if (it->GetName() == channel)
+			{
+				targetChannel = &(*it);
+				break;
+			}
+		}
+		if (targetChannel->GetMemberList().find(client->GetNickname()))
+		{
+		}
+	}
+    if (!client->GetNickname().empty() && !client->GetUsername().empty() && client->GetRegistered() && !client->GetLog())
     {
-        client->SetRegistered(true);
         client->SetLog(true);
 
         std::string welcomeMsg = ":ircserv 001 " + client->GetNickname() + " :Welcome to the ft_irc network " + client->GetNickname() + "\r\n";
@@ -421,6 +441,10 @@ void Server::ParseMessage(std::string message, Client *client)
         
         std::cout << GRE << "Client <" << client->GetFd() << "> enregistré en tant que " << client->GetNickname() << WHI << std::endl;
     }
+	else if(!client->GetNickname().empty() && !client->GetUsername().empty() && !client->GetRegistered())
+	{
+		client->AppendOutBuffer(":ircserv 451 " + client->GetNickname() + " :You have not registered\r\n");
+	}
 }
 
 Client	*Server::getClientByFd(int fd)
