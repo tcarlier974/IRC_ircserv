@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/10 16:02:10 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/31 18:26:18 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/31 23:11:52 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,12 +24,12 @@ int main(int ac, char **av)
 	{
 		signal(SIGINT, Server::SigHandler);
 		signal(SIGQUIT, Server::SigHandler);
+		signal(SIGPIPE, SIG_IGN);
 		server.ServerInit();
 		while (!server.getSig())
 		{
 			server.run();
 		}
-		
 	}
 	catch (const std::exception &e)
 	{
