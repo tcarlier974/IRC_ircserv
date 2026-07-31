@@ -12,6 +12,8 @@ class Channel
         std::string _topic;
         std::vector<Client*> _members;
         std::vector<Client*> _operators;
+        std::vector<Client*> _invited;
+        bool _inv_only;
 		int Nuser;
 		std::string _password;
 		int			_limit;
@@ -30,6 +32,10 @@ class Channel
 
         void SetTopic(std::string topic);
         std::string GetTopic() const;
+        void SetInvOnly(bool inv_only);
+        bool getInv_only() const;
+        std::vector<Client*> GetInvited() const;
+        void setInvited(Client *client);
 
 		bool IsOPbyNick(std::string nick);
 		bool SetOP(std::string nick);
