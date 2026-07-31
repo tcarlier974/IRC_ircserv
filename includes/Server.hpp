@@ -23,7 +23,7 @@ class Server
 		int _SerSocketFd;
 		std::string _Password;
 		static bool _sig;
-		std::vector< Client > _Clients;
+		std::list< Client > _Clients;
 		std::vector< struct pollfd > _fds;
 		int	_NextChannelId;
 		std::string _hostName;

@@ -10,9 +10,9 @@ class Channel
     private:
         std::string _name;
         std::string _topic;
-        std::vector<Client*> _members;
-        std::vector<Client*> _operators;
-        std::vector<Client*> _invited;
+        std::list<Client*> _members;
+        std::list<Client*> _operators;
+        std::list<Client*> _invited;
         bool _inv_only;
 		int Nuser;
 		std::string _password;
@@ -35,7 +35,7 @@ class Channel
         std::string GetTopic() const;
         void SetInvOnly(bool inv_only);
         bool getInv_only() const;
-        std::vector<Client*> GetInvited() const;
+        std::list<Client*> GetInvited() const;
         void setInvited(Client *client);
 
 		bool IsOPbyNick(std::string nick);

@@ -144,10 +144,10 @@ void Server::SigHandler(int signum)
 
 void Server::Closefds()
 {
-	for (size_t i = 0; i < _Clients.size(); ++i)
+	for (std::list<Client>::iterator it = _Clients.begin(); it != _Clients.end(); ++it)
 	{
-		std::cout << RED << "Closing connection with client: " << _Clients[i].GetNickname() << WHI << std::endl;
-		close(_Clients[i].GetFd());
+		std::cout << RED << "Closing connection with client: " << it->GetNickname() << WHI << std::endl;
+		close(it->GetFd());
 	}
 	if (_SerSocketFd != -1)
 	{
@@ -765,7 +765,7 @@ void Server::ParseMessage(std::string message, Client *client)
 
 Client *Server::getClientByFd(int fd)
 {
-	for (std::vector<Client>::iterator it = this->_Clients.begin(); it != this->_Clients.end(); ++it)
+	for (std::list<Client>::iterator it = this->_Clients.begin(); it != this->_Clients.end(); ++it)
 	{
 		if (it->GetFd() == fd)
 			return (&(*it));
@@ -775,7 +775,7 @@ Client *Server::getClientByFd(int fd)
 
 void Server::ClearClients(int fd)
 {
-	for (std::vector<Client>::iterator it = _Clients.begin(); it != _Clients.end(); ++it)
+	for (std::list<Client>::iterator it = _Clients.begin(); it != _Clients.end(); ++it)
 	{
 		if (it->GetFd() == fd)
 		{
@@ -840,7 +840,7 @@ void Server::ReceiveNewData(int fd)
 
 Client *Server::getClientByNick(std::string nick)
 {
-	for (std::vector<Client>::iterator it = this->_Clients.begin(); it != this->_Clients.end(); ++it)
+	for (std::list<Client>::iterator it = this->_Clients.begin(); it != this->_Clients.end(); ++it)
 	{
 		if (it->GetNickname() == nick)
 			return &(*it);

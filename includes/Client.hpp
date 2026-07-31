@@ -35,6 +35,7 @@
 # include	<unistd.h>
 # include	<utility>
 # include	<vector>
+# include 	<list>
 
 #define RED "\e[1;31m" //-> for red color
 #define WHI "\e[0;37m" //-> for white color

@@ -91,7 +91,7 @@ void Channel::RemoveMember(Client *client)
 
 void Channel::BroadcastMessage(std::string message, Client *exclude)
 {
-	for (std::vector<Client *>::iterator it = _members.begin(); it != _members.end(); ++it)
+	for (std::list<Client *>::iterator it = _members.begin(); it != _members.end(); ++it)
 	{
 		if (*it != exclude)
 		{
@@ -103,10 +103,10 @@ void Channel::BroadcastMessage(std::string message, Client *exclude)
 std::string Channel::GetMemberList()
 {
 	std::string list = "";
-	for (std::vector<Client *>::iterator it = _members.begin(); it != _members.end(); ++it)
+	for (std::list<Client *>::iterator it = _members.begin(); it != _members.end(); ++it)
 	{
 		bool isOP = false;
-		for (std::vector<Client *>::iterator opIt = _operators.begin(); opIt != _operators.end(); ++opIt)
+		for (std::list<Client *>::iterator opIt = _operators.begin(); opIt != _operators.end(); ++opIt)
 		{
 			if (*it == *opIt)
 			{
@@ -151,7 +151,7 @@ bool Channel::getTopicOnlyOP() const
 	return _topic_onlyOP;
 }
 
-std::vector<Client *> Channel::GetInvited() const
+std::list<Client *> Channel::GetInvited() const
 {
 	return _invited;
 }
@@ -164,7 +164,7 @@ void Channel::setInvited(Client *client)
 
 bool Channel::IsOPbyNick(std::string nick)
 {
-	for (std::vector<Client *>::iterator opIt = this->_operators.begin(); opIt != this->_operators.end(); ++opIt)
+	for (std::list<Client *>::iterator opIt = this->_operators.begin(); opIt != this->_operators.end(); ++opIt)
 	{
 		if ((*opIt)->GetNickname() == nick)
 			return true;
@@ -174,7 +174,7 @@ bool Channel::IsOPbyNick(std::string nick)
 
 bool Channel::SetOP(std::string nick)
 {
-	for (std::vector<Client *>::iterator it = this->_members.begin(); it != this->_members.end(); ++it)
+	for (std::list<Client *>::iterator it = this->_members.begin(); it != this->_members.end(); ++it)
 	{
 		if ((*it)->GetNickname() == nick)
 		{
@@ -189,7 +189,7 @@ bool Channel::SetOP(std::string nick)
 
 bool Channel::DeOP(std::string nick)
 {
-	for (std::vector<Client *>::iterator it = this->_members.begin(); it != this->_members.end(); ++it)
+	for (std::list<Client *>::iterator it = this->_members.begin(); it != this->_members.end(); ++it)
 	{
 		if ((*it)->GetNickname() == nick)
 		{
