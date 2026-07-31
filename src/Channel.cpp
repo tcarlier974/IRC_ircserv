@@ -6,7 +6,7 @@
 /*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/26 13:06:15 by igilbert          #+#    #+#             */
-/*   Updated: 2026/07/31 08:50:07 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/31 10:38:22 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,8 @@ void Channel::AddMember(Client *client)
 	}
 	if (std::find(_members.begin(), _members.end(), client) == _members.end())
 		_members.push_back(client);
+	Nuser++;
+	std::cout << "number of users: " << Nuser << std::endl;
 }
 
 void Channel::RemoveMember(Client *client)
@@ -90,4 +92,19 @@ void Channel::SetTopic(std::string topic)
 std::string Channel::GetTopic() const
 {
 	return _topic;
+}
+
+bool Channel::IsOPbyNick(std::string nick)
+{
+	for (std::vector<Client*>::iterator opIt = this->_operators.begin(); opIt != this->_operators.end(); ++opIt)
+	{
+		if ((*opIt)->GetNickname() == nick)
+			return true;
+	}
+	return false;
+}
+
+void Channel::SetOP(Client *client)
+{
+	_operators.push_back(client);
 }
