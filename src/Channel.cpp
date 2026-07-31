@@ -6,7 +6,7 @@
 /*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/26 13:06:15 by igilbert          #+#    #+#             */
-/*   Updated: 2026/07/31 11:33:23 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/31 12:03:42 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,6 +118,22 @@ void Channel::SetOP(std::string nick)
 		{
 			if (std::find(this->_operators.begin(), this->_operators.end(), *it) == this->_operators.end())
 				this->_operators.push_back(*it);
+			break;
+		}
+	}
+}
+
+void Channel::DeOP(std::string nick)
+{
+	// if (GetMemberList().find(nick) == std::string::npos)
+	// 	return;
+	for (std::vector<Client*>::iterator it = this->_members.begin(); it != this->_members.end(); ++it)
+	{
+		printf("Client %s is checked for operator status in channel %s\n", (*it)->GetNickname().c_str(), this->_name.c_str());
+		if ((*it)->GetNickname() == nick)
+		{
+			if (std::find(this->_operators.begin(), this->_operators.end(), *it) == this->_operators.end())
+				_operators.erase(std::remove(_operators.begin(), _operators.end(), *it), _operators.end());
 			break;
 		}
 	}
