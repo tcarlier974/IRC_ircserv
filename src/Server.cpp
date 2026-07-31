@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/31 18:27:36 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/31 23:09:13 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,7 +110,6 @@ void Server::SerSocket()
 	struct sockaddr_in serverAddr;
 	struct pollfd NewPollFd;
 	memset(&serverAddr, 0, sizeof(serverAddr));
-	serverAddr.sin_len = sizeof(serverAddr);
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_addr.s_addr = INADDR_ANY;
 	serverAddr.sin_port = htons(this->_Port);
