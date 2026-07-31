@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/26 13:06:15 by igilbert          #+#    #+#             */
-/*   Updated: 2026/07/31 11:12:12 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/31 11:25:28 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,4 +118,5 @@ void Channel::SetOP(std::string nick)
 			break;
 		}
 	}
+	printf("List of operators in channel %s: ", GetMemberList().c_str());
 }
