@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/31 14:51:30 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/31 14:56:13 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -451,6 +451,11 @@ void Server::ParseMessage(std::string message, Client *client)
 				channel = &(*it);
 				break;
 			}
+		}
+		if (channel->getInv_only() && !channel->IsOPbyNick(client->GetNickname()))
+		{
+			client->AppendOutBuffer(":ircserv 482 " + client->GetNickname() + " " + channelName + " :You're not a channel operator\r\n");
+			return;
 		}
 		channel->setInvited(client);
 		Client *targetClient = getClientByNick(targetNick);
