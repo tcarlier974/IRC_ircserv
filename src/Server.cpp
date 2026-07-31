@@ -6,7 +6,7 @@
 /*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/31 14:58:30 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/31 14:59:52 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -452,9 +452,16 @@ void Server::ParseMessage(std::string message, Client *client)
 				break;
 			}
 		}
+		if (channel->getInv_only() && !channel->IsOPbyNick(client->GetNickname()))
+		{
+			client->AppendOutBuffer(":ircserv 482 " + client->GetNickname() + " " + channelName + " :You're not a channel operator\r\n");
+			return;
+		}
 		channel->setInvited(client);
-		channel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " INVITE " + targetNick + " :" + channelName + "\r\n");
+		Client *targetClient = getClientByNick(targetNick);
+		targetClient->AppendOutBuffer(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " INVITE " + targetNick + " :" + channelName + "\r\n");
 		client->AppendOutBuffer(":ircserv 341 " + client->GetNickname() + " " + targetNick + " :" + channelName + "\r\n");
+			
 	}
 	else if (command == "NOTICE")
     {
