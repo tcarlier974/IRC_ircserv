@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/26 13:06:15 by igilbert          #+#    #+#             */
-/*   Updated: 2026/07/30 18:30:58 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/31 08:50:07 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,10 @@ std::string Channel::GetName() const
 
 void Channel::AddMember(Client *client)
 {
+	if (_members.empty() && _operators.empty())
+	{
+		_operators.push_back(client);
+	}
 	if (std::find(_members.begin(), _members.end(), client) == _members.end())
 		_members.push_back(client);
 }
@@ -62,7 +66,17 @@ std::string Channel::GetMemberList()
     std::string list = "";
     for (std::vector<Client*>::iterator it = _members.begin(); it != _members.end(); ++it)
     { 
-        // plus tard rajouter '@' devant  pseudo des OP
+        bool isOP = false;
+		for (std::vector<Client*>::iterator opIt = _operators.begin(); opIt != _operators.end(); ++opIt)
+        {
+            if (*it == *opIt)
+            {
+                isOP = true;
+                break;
+            }
+        }
+		if (isOP)
+			list += "@";
         list += (*it)->GetNickname() + " ";
     }
     return list;
