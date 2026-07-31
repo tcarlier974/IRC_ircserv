@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/31 12:01:56 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/31 12:03:09 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -225,6 +225,16 @@ void Server::ParseMessage(std::string message, Client *client)
     {
         std::string nickname;
         iss >> nickname;
+
+		for (size_t i = 0; i < nickname.length(); ++i)
+		{
+			if (!isalnum(nickname[i]) && nickname[i] != '-' && nickname[0] != '-' && nickname[i] != '_' && nickname[i] != '[' && nickname[i] != ']' && nickname[i] != '\\' && nickname[i] != '`' && nickname[i] != '{' && nickname[i] != '}')
+			{
+				client->AppendOutBuffer(":ircserv 432 * " + nickname + " :Erroneous nickname\r\n");
+				return;
+			}
+		}
+			
         
         if (_ClientNames.find(nickname) != _ClientNames.end())
         {
