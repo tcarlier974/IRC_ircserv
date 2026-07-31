@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/31 11:04:50 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/07/31 11:14:07 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -453,11 +453,10 @@ void Server::ParseMessage(std::string message, Client *client)
 			std::vector<std::string> args;
 			while (iss)
 			{
-				std::string arg;
-				iss >> arg;
-				if (!arg.empty())
-					args.push_back(arg);
+				if (!mode.empty())
+					args.push_back(mode);
 				count++;
+				iss >> mode;
 			}
 			(void)count; // Pour éviter l'avertissement de variable non utilisée
 			char sign = '+';
@@ -470,6 +469,7 @@ void Server::ParseMessage(std::string message, Client *client)
 					(*it) = (*it).substr(1);
 				}
 				printf("Mode: %s, Sign: %c\n", (*it).c_str(), sign);
+				printf("Arg: %s\n", argIt->c_str());
 				switch ((*it)[0])
 				{
 					case 'o':
