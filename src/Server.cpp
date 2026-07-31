@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/31 14:41:44 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/31 14:51:30 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -453,8 +453,10 @@ void Server::ParseMessage(std::string message, Client *client)
 			}
 		}
 		channel->setInvited(client);
-		channel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " INVITE " + targetNick + " :" + channelName + "\r\n");
+		Client *targetClient = getClientByNick(targetNick);
+		targetClient->AppendOutBuffer(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " INVITE " + targetNick + " :" + channelName + "\r\n");
 		client->AppendOutBuffer(":ircserv 341 " + client->GetNickname() + " " + targetNick + " :" + channelName + "\r\n");
+			
 	}
 	else if (command == "NOTICE")
     {
