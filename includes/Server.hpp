@@ -6,7 +6,7 @@
 /*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/10 15:49:53 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/26 12:59:31 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/31 13:39:23 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,7 @@ class Server
 		static void SigHandler(int signum);
 
 		void Closefds();
+		void CloseChannel(Channel *channel);
 		void ClearClients(int fd);
 
 		bool getSig() const;
