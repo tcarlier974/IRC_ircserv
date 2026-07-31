@@ -6,15 +6,15 @@
 /*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/26 13:06:15 by igilbert          #+#    #+#             */
-/*   Updated: 2026/07/31 14:44:44 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/31 14:58:15 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Channel.hpp"
 
-Channel::Channel(std::string name) : _name(name), _topic(""), _members(), _operators(), _invited(), _inv_only(false), Nuser(0), _password(""), _limit(-1) {}
+Channel::Channel(std::string name) : _name(name), _topic(""), _members(), _operators(), _invited(), _inv_only(false), Nuser(0), _password(""), _limit(-1), _topic_onlyOP(false) {}
 
-Channel::Channel(const Channel &other) : _name(other._name), _topic(other._topic), _members(other._members), _operators(other._operators), _invited(other._invited), _inv_only(other._inv_only), Nuser(other.Nuser), _password(other._password), _limit(other._limit) {}
+Channel::Channel(const Channel &other) : _name(other._name), _topic(other._topic), _members(other._members), _operators(other._operators), _invited(other._invited), _inv_only(other._inv_only), Nuser(other.Nuser), _password(other._password), _limit(other._limit), _topic_onlyOP(other._topic_onlyOP) {}
 
 Channel &Channel::operator=(const Channel &other)
 {
@@ -29,6 +29,7 @@ Channel &Channel::operator=(const Channel &other)
 		Nuser = other.Nuser;
 		_password = other._password;
 		_limit = other._limit;
+		_topic_onlyOP = other._topic_onlyOP;
 	}
 	return *this;
 }
@@ -138,6 +139,16 @@ void Channel::SetInvOnly(bool inv_only)
 bool Channel::getInv_only() const
 {
 	return _inv_only;
+}
+
+void Channel::SetTopicOnlyOP(bool topic_onlyOP)
+{
+	_topic_onlyOP = topic_onlyOP;
+}
+
+bool Channel::getTopicOnlyOP() const
+{
+	return _topic_onlyOP;
 }
 
 std::vector<Client*> Channel::GetInvited() const

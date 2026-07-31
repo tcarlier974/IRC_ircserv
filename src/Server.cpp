@@ -6,7 +6,7 @@
 /*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/31 14:41:44 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/31 14:58:30 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -678,6 +678,50 @@ void Server::ParseMessage(std::string message, Client *client)
 						else if (sign == '-' && targetChannel->GetLimit() == -1)
 						{
 							client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :No limit is set\r\n");
+						}
+						break;
+					case 'i':
+						if (sign == '+')
+						{
+							if (targetChannel->getInv_only())
+							{
+								client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :Invite only is already set\r\n");
+								break;
+							}
+							targetChannel->SetInvOnly(true);
+							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "+i\r\n");
+						}
+						else if (sign == '-')
+						{
+							if (!targetChannel->getInv_only())
+							{
+								client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :Invite only is not set\r\n");
+								break;
+							}
+							targetChannel->SetInvOnly(false);
+							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-i\r\n");
+						}
+						break;
+					case 't':
+						if (sign == '+')
+						{
+							if (targetChannel->getTopicOnlyOP())
+							{
+								client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :Topic only for ops is already set\r\n");
+								break;
+							}
+							targetChannel->SetTopicOnlyOP(true);
+							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "+t\r\n");
+						}
+						else if (sign == '-')
+						{
+							if (!targetChannel->getTopicOnlyOP())
+							{
+								client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :Topic only for ops is not set\r\n");
+								break;
+							}
+							targetChannel->SetTopicOnlyOP(false);
+							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-t\r\n");
 						}
 						break;
 					default:

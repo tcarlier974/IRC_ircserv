@@ -17,6 +17,7 @@ class Channel
 		int Nuser;
 		std::string _password;
 		int			_limit;
+		bool		_topic_onlyOP;
 
     public:
         Channel(std::string name);
@@ -43,6 +44,8 @@ class Channel
 		void SetPassword(std::string pass);
 		void SetLimit(int limit);
 		int GetLimit() const;
+		void SetTopicOnlyOP(bool topic_onlyOP);
+		bool getTopicOnlyOP() const;
 
 		bool CheckPassword(std::string pass) const;
         
