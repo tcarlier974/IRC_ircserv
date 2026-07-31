@@ -30,8 +30,8 @@ class Channel
         std::string GetTopic() const;
 
 		bool IsOPbyNick(std::string nick);
-		void SetOP(std::string nick);
-		void DeOP(std::string nick);
+		bool SetOP(std::string nick);
+		bool DeOP(std::string nick);
         
         void BroadcastMessage(std::string message, Client *exclude = NULL);
 };
