@@ -6,7 +6,7 @@
 /*   By: igilbert <igilbert@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/31 13:16:57 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/07/31 13:39:04 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,16 @@ Server::Server(char **av) :
 {
 		_Port = setPort(av[1]);
 		_Password = setPassword(av[2]);
-    }
+}
+
+void Server::CloseChannel(Channel *channel)
+{
+	std::vector<Channel>::iterator it = std::find(_Channels.begin(), _Channels.end(), *channel);
+	if (it != _Channels.end())
+	{
+		_Channels.erase(it);
+	}
+}
 
 Server::Server(const Server &other)
 {
