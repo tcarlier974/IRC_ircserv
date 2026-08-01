@@ -6,7 +6,7 @@
 /*   By: igilbert <igilbert@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/08/01 14:04:36 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/08/01 14:36:43 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -410,7 +410,7 @@ void Server::ParseMessage(std::string message, Client *client)
 
 			if (channel && channel->GetMemberList().find(client->GetNickname()) != std::string::npos)
 			{
-				if (getline(iss, text) && !text.empty())
+				if (getline(iss, text) && !text.empty() && text.length() < 1000)
 				{
 					if (text[0] == ' ')
 						text = text.substr(1);
@@ -630,7 +630,6 @@ void Server::ParseMessage(std::string message, Client *client)
 				count++;
 				iss >> mode;
 			}
-			(void)count;
 			char sign = '+';
 			std::vector<std::string>::iterator argIt = args.begin();
 			for (std::vector<std::string>::iterator it = modes.begin(); it != modes.end(); ++it)
@@ -647,25 +646,34 @@ void Server::ParseMessage(std::string message, Client *client)
 					switch ((*it)[i])
 					{
 					case 'o':
-						if (sign == '+')
+						if (count > 0)
 						{
-							if (targetChannel->SetOP(argIt->c_str()))
-								targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "+o " + argIt->c_str() + "\r\n");
-							argIt++;
+							if (sign == '+')
+							{
+								if (targetChannel->SetOP(argIt->c_str()))
+									targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "+o " + argIt->c_str() + "\r\n");
+								argIt++;
+								count--;
+							}
+							else
+							{
+								if (targetChannel->DeOP(argIt->c_str()))
+									targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-o " + argIt->c_str() + "\r\n");
+								argIt++;
+								count--;
+							}
 						}
-						else
-						{
-							if (targetChannel->DeOP(argIt->c_str()))
-								targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-o " + argIt->c_str() + "\r\n");
-							argIt++;
+						else {
+							client->AppendOutBuffer(":ircserv 467 " + client->GetNickname() + " " + channel + " :ERR_NEEDMOREPARAMS\r\n");
 						}
 						break;
 					case 'k':
-						if (sign == '+' && targetChannel->CheckPassword(""))
+						if (sign == '+' && targetChannel->CheckPassword("") && count > 0)
 						{
 							targetChannel->SetPassword(argIt->c_str());
 							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "+k " + argIt->c_str() + "\r\n");
 							argIt++;
+							count--;
 						}
 						else if (sign == '-' && !targetChannel->CheckPassword(""))
 						{
@@ -674,25 +682,28 @@ void Server::ParseMessage(std::string message, Client *client)
 								targetChannel->SetPassword("");
 								targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-k\r\n");
 							}
-							else
+							else if (count > 0)
 							{
 								client->AppendOutBuffer(":ircserv 467 " + client->GetNickname() + " " + channel + " :Incorrect channel key\r\n");
 							}
 							argIt++;
+							count--;
 						}
-						else if (sign == '+' && !targetChannel->CheckPassword(""))
+						else if (sign == '+' && !targetChannel->CheckPassword("") && count > 0)
 						{
 							client->AppendOutBuffer(":ircserv 467 " + client->GetNickname() + " " + channel + " :Channel key already set\r\n");
 							argIt++;
+							count--;
 						}
-						else if (sign == '-' && targetChannel->CheckPassword(""))
+						else if (sign == '-' && targetChannel->CheckPassword("") && count >0)
 						{
 							client->AppendOutBuffer(":ircserv 467 " + client->GetNickname() + " " + channel + " :No channel key is set\r\n");
 							argIt++;
+							count--;
 						}
 						break;
 					case 'l':
-						if (sign == '+')
+						if (sign == '+' && count > 0)
 						{
 							int limit = atoi(argIt->c_str());
 							if (limit > 0 || argIt->c_str() == std::string("0"))
@@ -705,6 +716,7 @@ void Server::ParseMessage(std::string message, Client *client)
 								client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :Not enough parameters\r\n");
 							}
 							argIt++;
+							count--;
 						}
 						else if (sign == '-' && targetChannel->GetLimit() != -1)
 						{
@@ -715,7 +727,6 @@ void Server::ParseMessage(std::string message, Client *client)
 						{
 							client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :No limit is set\r\n");
 						}
-						printf("%s\n", argIt->c_str());
 						break;
 					case 'i':
 						if (sign == '+')
