@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/10 14:51:49 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/31 23:10:50 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/08/01 09:48:00 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,7 @@
 # include	<utility>
 # include	<vector>
 # include 	<list>
+# include	<cstdlib>
 
 #define RED "\e[1;31m" //-> for red color
 #define WHI "\e[0;37m" //-> for white color
@@ -88,6 +89,9 @@ class Client
 		bool GetAuth(void);
 		bool GetLog(void);
 		void EraseOutBuffer(size_t pos);
+		bool operator==(const Client& other) const {
+    	return this->_Fd == other._Fd; 
+		}
 };
 
 #endif

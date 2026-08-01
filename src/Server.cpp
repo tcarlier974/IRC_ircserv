@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/07/31 23:14:15 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/08/01 09:57:45 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -368,7 +368,8 @@ void Server::ParseMessage(std::string message, Client *client)
 				_Channels.push_back(Channel(channelName));
 				channel = &_Channels.back();
 			}
-			if (channel->getInv_only() && std::find(channel->GetInvited().begin(), channel->GetInvited().end(), client) == channel->GetInvited().end())
+			std::list<Client *> invitedList = channel->GetInvited();
+			if (channel->getInv_only() && std::find(invitedList.begin(), invitedList.end(), client) == invitedList.end())
 			{
 				client->AppendOutBuffer(":ircserv 473 " + client->GetNickname() + " " + channelName + " :Cannot join channel (+i)\r\n");
 				return;
@@ -465,8 +466,8 @@ void Server::ParseMessage(std::string message, Client *client)
 			client->AppendOutBuffer(":ircserv 482 " + client->GetNickname() + " " + channelName + " :You're not a channel operator\r\n");
 			return;
 		}
-		channel->setInvited(client);
 		Client *targetClient = getClientByNick(targetNick);
+		channel->setInvited(targetClient);
 		targetClient->AppendOutBuffer(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " INVITE " + targetNick + " :" + channelName + "\r\n");
 		client->AppendOutBuffer(":ircserv 341 " + client->GetNickname() + " " + targetNick + " :" + channelName + "\r\n");
 	}
@@ -626,120 +627,123 @@ void Server::ParseMessage(std::string message, Client *client)
 					sign = (*it)[0];
 					(*it) = (*it).substr(1);
 				}
-				// printf("Mode: %s, Sign: %c\n", (*it).c_str(), sign);
-				// printf("Arg: %s\n", argIt->c_str());
-				switch ((*it)[0])
+				for (size_t i = 0; i < (*it).size(); ++i)
 				{
-				case 'o':
-					if (sign == '+')
+					// printf("Mode: %s, Sign: %c\n", (*it).c_str(), sign);
+					// printf("Arg: %s\n", argIt->c_str());
+					switch ((*it)[i])
 					{
-						if (targetChannel->SetOP(argIt->c_str()))
-							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "+o " + argIt->c_str() + "\r\n");
-						argIt++;
-					}
-					else
-					{
-						if (targetChannel->DeOP(argIt->c_str()))
-							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-o " + argIt->c_str() + "\r\n");
-						argIt++;
-					}
-					break;
-				case 'k':
-					if (sign == '+' && targetChannel->CheckPassword(""))
-					{
-						targetChannel->SetPassword(argIt->c_str());
-						targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "+k " + argIt->c_str() + "\r\n");
-						argIt++;
-					}
-					else if (sign == '-' && !targetChannel->CheckPassword(""))
-					{
-						targetChannel->SetPassword("");
-						targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-k\r\n");
-						argIt++;
-					}
-					else if (sign == '+' && !targetChannel->CheckPassword(""))
-					{
-						client->AppendOutBuffer(":ircserv 467 " + client->GetNickname() + " " + channel + " :Channel key already set\r\n");
-						argIt++;
-					}
-					else if (sign == '-' && targetChannel->CheckPassword(""))
-					{
-						client->AppendOutBuffer(":ircserv 467 " + client->GetNickname() + " " + channel + " :No channel key is set\r\n");
-						argIt++;
-					}
-					break;
-				case 'l':
-					if (sign == '+')
-					{
-						int limit = atoi(argIt->c_str());
-						if (limit >= 0)
+					case 'o':
+						if (sign == '+')
 						{
-							targetChannel->SetLimit(limit);
-							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "+l " + argIt->c_str() + "\r\n");
+							if (targetChannel->SetOP(argIt->c_str()))
+								targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "+o " + argIt->c_str() + "\r\n");
+							argIt++;
 						}
 						else
 						{
-							client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :Not enough parameters\r\n");
+							if (targetChannel->DeOP(argIt->c_str()))
+								targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-o " + argIt->c_str() + "\r\n");
+							argIt++;
 						}
-						argIt++;
-					}
-					else if (sign == '-' && targetChannel->GetLimit() != -1)
-					{
-						targetChannel->SetLimit(-1);
-						targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-l\r\n");
-					}
-					else if (sign == '-' && targetChannel->GetLimit() == -1)
-					{
-						client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :No limit is set\r\n");
-					}
-					break;
-				case 'i':
-					if (sign == '+')
-					{
-						if (targetChannel->getInv_only())
+						break;
+					case 'k':
+						if (sign == '+' && targetChannel->CheckPassword(""))
 						{
-							client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :Invite only is already set\r\n");
-							break;
+							targetChannel->SetPassword(argIt->c_str());
+							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "+k " + argIt->c_str() + "\r\n");
+							argIt++;
 						}
-						targetChannel->SetInvOnly(true);
-						targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "+i\r\n");
-					}
-					else if (sign == '-')
-					{
-						if (!targetChannel->getInv_only())
+						else if (sign == '-' && !targetChannel->CheckPassword(""))
 						{
-							client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :Invite only is not set\r\n");
-							break;
+							targetChannel->SetPassword("");
+							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-k\r\n");
+							argIt++;
 						}
-						targetChannel->SetInvOnly(false);
-						targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-i\r\n");
-					}
-					break;
-				case 't':
-					if (sign == '+')
-					{
-						if (targetChannel->getTopicOnlyOP())
+						else if (sign == '+' && !targetChannel->CheckPassword(""))
 						{
-							client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :Topic only for ops is already set\r\n");
-							break;
+							client->AppendOutBuffer(":ircserv 467 " + client->GetNickname() + " " + channel + " :Channel key already set\r\n");
+							argIt++;
 						}
-						targetChannel->SetTopicOnlyOP(true);
-						targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "+t\r\n");
-					}
-					else if (sign == '-')
-					{
-						if (!targetChannel->getTopicOnlyOP())
+						else if (sign == '-' && targetChannel->CheckPassword(""))
 						{
-							client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :Topic only for ops is not set\r\n");
-							break;
+							client->AppendOutBuffer(":ircserv 467 " + client->GetNickname() + " " + channel + " :No channel key is set\r\n");
+							argIt++;
 						}
-						targetChannel->SetTopicOnlyOP(false);
-						targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-t\r\n");
+						break;
+					case 'l':
+						if (sign == '+')
+						{
+							int limit = atoi(argIt->c_str());
+							if (limit >= 0)
+							{
+								targetChannel->SetLimit(limit);
+								targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "+l " + argIt->c_str() + "\r\n");
+							}
+							else
+							{
+								client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :Not enough parameters\r\n");
+							}
+							argIt++;
+						}
+						else if (sign == '-' && targetChannel->GetLimit() != -1)
+						{
+							targetChannel->SetLimit(-1);
+							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-l\r\n");
+						}
+						else if (sign == '-' && targetChannel->GetLimit() == -1)
+						{
+							client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :No limit is set\r\n");
+						}
+						break;
+					case 'i':
+						if (sign == '+')
+						{
+							if (targetChannel->getInv_only())
+							{
+								client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :Invite only is already set\r\n");
+								break;
+							}
+							targetChannel->SetInvOnly(true);
+							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "+i\r\n");
+						}
+						else if (sign == '-')
+						{
+							if (!targetChannel->getInv_only())
+							{
+								client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :Invite only is not set\r\n");
+								break;
+							}
+							targetChannel->SetInvOnly(false);
+							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-i\r\n");
+						}
+						break;
+					case 't':
+						if (sign == '+')
+						{
+							if (targetChannel->getTopicOnlyOP())
+							{
+								client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :Topic only for ops is already set\r\n");
+								break;
+							}
+							targetChannel->SetTopicOnlyOP(true);
+							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "+t\r\n");
+						}
+						else if (sign == '-')
+						{
+							if (!targetChannel->getTopicOnlyOP())
+							{
+								client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :Topic only for ops is not set\r\n");
+								break;
+							}
+							targetChannel->SetTopicOnlyOP(false);
+							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-t\r\n");
+						}
+						break;
+					default:
+						client->AppendOutBuffer(":ircserv 472 " + client->GetNickname() + " " + (*it) + " :is unknown mode char to me\r\n");
+						break;
 					}
-					break;
-				default:
-					client->AppendOutBuffer(":ircserv 472 " + client->GetNickname() + " " + (*it) + " :is unknown mode char to me\r\n");
-					break;
 				}
 			}
 		}
