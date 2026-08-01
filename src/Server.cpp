@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/08/01 09:57:45 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/08/01 10:10:25 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -599,6 +599,11 @@ void Server::ParseMessage(std::string message, Client *client)
 		iss >> mode;
 		std::vector<std::string> modes;
 		bool flag = false;
+		if (!mode.empty() && (mode[0] != '+' && mode[0] != '-'))
+		{
+			client->AppendOutBuffer(":ircserv 501 " + client->GetNickname() + " :Unknown MODE flag\r\n");
+			return;
+		}
 		while (iss && (mode[0] == '+' || mode[0] == '-'))
 		{
 			if (!mode.empty())
