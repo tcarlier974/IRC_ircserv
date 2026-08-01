@@ -666,8 +666,15 @@ void Server::ParseMessage(std::string message, Client *client)
 						}
 						else if (sign == '-' && !targetChannel->CheckPassword(""))
 						{
-							targetChannel->SetPassword("");
-							targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-k\r\n");
+							if (targetChannel->CheckPassword(argIt->c_str()))
+							{
+								targetChannel->SetPassword("");
+								targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-k\r\n");
+							}
+							else
+							{
+								client->AppendOutBuffer(":ircserv 467 " + client->GetNickname() + " " + channel + " :Incorrect channel key\r\n");
+							}
 							argIt++;
 						}
 						else if (sign == '+' && !targetChannel->CheckPassword(""))
@@ -685,7 +692,7 @@ void Server::ParseMessage(std::string message, Client *client)
 						if (sign == '+')
 						{
 							int limit = atoi(argIt->c_str());
-							if (limit >= 0)
+							if (limit > 0 || argIt->c_str() == std::string("0"))
 							{
 								targetChannel->SetLimit(limit);
 								targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "+l " + argIt->c_str() + "\r\n");
