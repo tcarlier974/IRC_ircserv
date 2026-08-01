@@ -572,6 +572,11 @@ void Server::ParseMessage(std::string message, Client *client)
 			client->AppendOutBuffer(":ircserv 482 " + client->GetNickname() + " :You're not a channel operator\r\n");
 			return;
 		}
+		if (channel->IsMember(getClientByNick(targetNick)) == false)
+		{
+			client->AppendOutBuffer(":ircserv 442 " + client->GetNickname() + " " + channelName + " :Is not on that channel\r\n");
+			return;
+		}
 		channel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " KICK " + channelName + " " + targetNick + reason + "\r\n");
 		channel->RemoveMember(getClientByNick(targetNick));
 	}
