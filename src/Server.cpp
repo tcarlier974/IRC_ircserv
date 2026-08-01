@@ -6,7 +6,7 @@
 /*   By: igilbert <igilbert@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/08/01 13:28:16 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/08/01 14:04:36 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -230,7 +230,7 @@ void Server::ParseMessage(std::string message, Client *client)
 
 		for (size_t i = 0; i < nickname.length(); ++i)
 		{
-			if (!isalnum(nickname[i]) && nickname[i] != '-' && nickname[0] != '-' && nickname[i] != '_' && nickname[i] != '[' && nickname[i] != ']' && nickname[i] != '\\' && nickname[i] != '`' && nickname[i] != '{' && nickname[i] != '}')
+			if ((!isalnum(nickname[i]) && nickname[i] != '-' && nickname[0] != '-' && nickname[i] != '_' && nickname[i] != '[' && nickname[i] != ']' && nickname[i] != '\\' && nickname[i] != '`' && nickname[i] != '{' && nickname[i] != '}') || i > 511)
 			{
 				client->AppendOutBuffer(":ircserv 432 * " + nickname + " :Erroneous nickname\r\n");
 				return;
@@ -248,6 +248,7 @@ void Server::ParseMessage(std::string message, Client *client)
 		client->AppendOutBuffer(":" + client->GetNickname() + " NICK :" + nickname + "\r\n");
 		client->SetNickname(nickname);
 		_ClientNames.insert(nickname);
+		client->SetAuth(true);
 	}
 	else if (command == "USER")
 	{
@@ -342,7 +343,7 @@ void Server::ParseMessage(std::string message, Client *client)
 		if (iss >> key)
 		{
 		}
-		if (!client->GetRegistered())
+		if (!client->GetRegistered() || !client->GetAuth())
 		{
 			client->AppendOutBuffer(":ircserv 451 " + client->GetNickname() + " :You have not registered\r\n");
 			return;
@@ -437,7 +438,7 @@ void Server::ParseMessage(std::string message, Client *client)
 	}
 	else if (command == "INVITE")
 	{
-		if (!client->GetRegistered())
+		if (!client->GetRegistered() || !client->GetAuth())
 		{
 			client->AppendOutBuffer(":ircserv 451 " + client->GetNickname() + " :You have not registered\r\n");
 			return;
@@ -550,7 +551,7 @@ void Server::ParseMessage(std::string message, Client *client)
 	}
 	else if (command == "KICK")
 	{
-		if (!client->GetRegistered())
+		if (!client->GetRegistered() || !client->GetAuth())
 		{
 			client->AppendOutBuffer(":ircserv 451 " + client->GetNickname() + " :You have not registered\r\n");
 			return;
@@ -577,7 +578,7 @@ void Server::ParseMessage(std::string message, Client *client)
 	}
 	else if (command == "MODE")
 	{
-		if (!client->GetRegistered())
+		if (!client->GetRegistered() || !client->GetAuth())
 		{
 			client->AppendOutBuffer(":ircserv 451 " + client->GetNickname() + " :You have not registered\r\n");
 			return;
@@ -776,7 +777,7 @@ void Server::ParseMessage(std::string message, Client *client)
 			return;
 		}
 	}
-	if (!client->GetNickname().empty() && !client->GetUsername().empty() && client->GetRegistered() && !client->GetLog())
+	if (!client->GetNickname().empty() && !client->GetUsername().empty() && client->GetRegistered() && client->GetAuth() && !client->GetLog())
 	{
 		client->SetLog(true);
 
