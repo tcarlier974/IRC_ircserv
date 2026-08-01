@@ -6,7 +6,7 @@
 /*   By: igilbert <igilbert@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/08/01 14:36:43 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/08/01 15:40:23 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -336,9 +336,9 @@ void Server::ParseMessage(std::string message, Client *client)
 	}
 	else if (command == "JOIN")
 	{
-		std::string channelName;
+		std::string channelNames;
 		std::string key = "";
-		iss >> channelName;
+		iss >> channelNames;
 		if (iss >> key)
 		{
 		}
@@ -347,7 +347,7 @@ void Server::ParseMessage(std::string message, Client *client)
 			client->AppendOutBuffer(":ircserv 451 " + client->GetNickname() + " :You have not registered\r\n");
 			return;
 		}
-		if (!channelName.empty())
+		if (!channelName.empty() && !(channelName.find_first_of(" ,\a\r\n:") != std::string::npos))
 		{
 			if (channelName[0] != '#')
 			{
@@ -374,6 +374,10 @@ void Server::ParseMessage(std::string message, Client *client)
 				client->AppendOutBuffer(":ircserv 473 " + client->GetNickname() + " " + channelName + " :Cannot join channel (+i)\r\n");
 				return;
 			}
+			else if (std::find(invitedList.begin(), invitedList.end(), client) != invitedList.end())
+			{
+				channel->RemoveInv(client);
+			}
 			if (!channel->AddMember(client, key))
 				return;
 			std::string joinMsg = ":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " JOIN :" + channelName + "\r\n";
@@ -384,6 +388,11 @@ void Server::ParseMessage(std::string message, Client *client)
 
 			std::string rpl_endofnames = ":ircserv 366 " + client->GetNickname() + " " + channelName + " :End of /NAMES list.\r\n";
 			client->AppendOutBuffer(rpl_endofnames);
+		}
+		else
+		{
+			client->AppendOutBuffer(":ircserv 403 " + client->GetNickname() + " " + channelName + " :No such channel (invalid name)\r\n");
+
 		}
 	}
 	else if (command == "TOPIC")

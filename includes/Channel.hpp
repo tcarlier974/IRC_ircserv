@@ -31,6 +31,8 @@ class Channel
         bool AddMember(Client *client, std::string pass = "");
         void RemoveMember(Client *client);
 
+        void RemoveInv(Client *client);
+
         void SetTopic(std::string topic);
         std::string GetTopic() const;
         void SetInvOnly(bool inv_only);

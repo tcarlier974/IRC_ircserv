@@ -6,7 +6,7 @@
 /*   By: igilbert <igilbert@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/26 13:06:15 by igilbert          #+#    #+#             */
-/*   Updated: 2026/08/01 12:47:27 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/08/01 15:34:00 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,6 +88,11 @@ void Channel::RemoveMember(Client *client)
 	_members.erase(std::remove(_members.begin(), _members.end(), client), _members.end());
 	_operators.erase(std::remove(_operators.begin(), _operators.end(), client), _operators.end());
 	Nuser--;
+}
+
+void 	Channel::RemoveInv(Client *client)
+{
+	_invited.erase(std::remove(_invited.begin(), _invited.end(), client), _invited.end());
 }
 
 void Channel::BroadcastMessage(std::string message, Client *exclude)
