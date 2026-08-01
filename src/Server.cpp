@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/08/01 10:20:46 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/08/01 10:30:17 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -588,6 +588,11 @@ void Server::ParseMessage(std::string message, Client *client)
 			{
 				targetChannel = &(*it);
 				break;
+			}
+			if (it == _Channels.end())
+			{
+				client->AppendOutBuffer(":ircserv 403 " + client->GetNickname() + " " + channel + " :No such channel\r\n");
+				return;
 			}
 		}
 		if (targetChannel->IsMember(client) == false)
