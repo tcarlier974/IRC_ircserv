@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: igilbert <igilbert@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/08/01 17:12:27 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/08/01 18:27:00 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -288,11 +288,13 @@ void Server::ParseMessage(std::string message, Client *client)
 					break;
 				}
 			}
-
+			if (targetChannel && !targetChannel->IsMember(client))
+			{
+				client->AppendOutBuffer(":ircserv 482 " + client->GetNickname() + " " + target + " :You're not a member of that channel\r\n");
+			}
 			if (targetChannel)
 			{
 				std::string msg = ":" + client->GetNickname() + " PRIVMSG " + target + " :" + text + "\r\n";
-				// On utilise BroadcastMessage en excluant l'expéditeur
 				targetChannel->BroadcastMessage(msg, client);
 			}
 			else
@@ -403,7 +405,6 @@ void Server::ParseMessage(std::string message, Client *client)
 					break;
 				}
 			}
-
 			if (!channel)
 			{
 				_Channels.push_back(Channel(channelName));
@@ -449,6 +450,11 @@ void Server::ParseMessage(std::string message, Client *client)
 					channel = &(*it);
 					break;
 				}
+				if (it + 1 == _Channels.end())
+				{
+					client->AppendOutBuffer(":ircserv 403 " + client->GetNickname() + " " + channelName + " :No such channel\r\n");
+					return;
+				}
 			}
 
 			if (channel && channel->GetMemberList().find(client->GetNickname()) != std::string::npos)
@@ -470,7 +476,7 @@ void Server::ParseMessage(std::string message, Client *client)
 			}
 			else
 			{
-				client->AppendOutBuffer(":ircserv 403 " + client->GetNickname() + " " + channelName + " :No such channel\r\n");
+				client->AppendOutBuffer(":ircserv 482 " + client->GetNickname() + " " + channelName + " :You're not a member of that channel\r\n");
 			}
 			if (channel && text.empty() && !channel->GetTopic().empty())
 			{
@@ -504,6 +510,11 @@ void Server::ParseMessage(std::string message, Client *client)
 				channel = &(*it);
 				break;
 			}
+			if (it + 1 == _Channels.end())
+			{
+				client->AppendOutBuffer(":ircserv 403 " + client->GetNickname() + " " + channelName + " :No such channel\r\n");
+				return;
+			}
 		}
 		if (channel->getInv_only() && !channel->IsOPbyNick(client->GetNickname()))
 		{
@@ -536,6 +547,11 @@ void Server::ParseMessage(std::string message, Client *client)
 				{
 					targetChannel = &(*it);
 					break;
+				}
+				if (it + 1 == _Channels.end())
+				{
+					client->AppendOutBuffer(":ircserv 403 " + client->GetNickname() + " " + target + " :No such channel\r\n");
+					return;
 				}
 			}
 
@@ -578,6 +594,11 @@ void Server::ParseMessage(std::string message, Client *client)
 					channel = &(*it);
 					break;
 				}
+				if (it + 1 == _Channels.end())
+				{
+					client->AppendOutBuffer(":ircserv 403 " + client->GetNickname() + " " + channelName + " :No such channel\r\n");
+					return;
+				}
 			}
 
 			if (channel)
@@ -606,12 +627,22 @@ void Server::ParseMessage(std::string message, Client *client)
 		iss >> channelName >> targetNick;
 		std::getline(iss, reason);
 		Channel *channel = NULL;
+		if (channelName.empty())
+		{
+			client->AppendOutBuffer(":ircserv 403 " + client->GetNickname() + " " + channelName + " :No such channel\r\n");
+			return;
+		}
 		for (std::vector<Channel>::iterator it = _Channels.begin(); it != _Channels.end(); ++it)
 		{
 			if (it->GetName() == channelName)
 			{
 				channel = &(*it);
 				break;
+			}
+			if (it + 1 == _Channels.end())
+			{
+				client->AppendOutBuffer(":ircserv 403 " + client->GetNickname() + " " + channelName + " :No such channel\r\n");
+				return;
 			}
 		}
 		if (!channel->IsOPbyNick(client->GetNickname()))
@@ -641,6 +672,11 @@ void Server::ParseMessage(std::string message, Client *client)
 		std::string channel;
 		iss >> channel;
 		Channel *targetChannel = NULL;
+		if (channel.empty())
+		{
+			client->AppendOutBuffer(":ircserv 403 " + client->GetNickname() + " " + channel + " :No such channel\r\n");
+			return;
+		}
 		for (std::vector<Channel>::iterator it = _Channels.begin(); it != _Channels.end(); ++it)
 		{
 			if (it->GetName() == channel)
@@ -662,7 +698,6 @@ void Server::ParseMessage(std::string message, Client *client)
 		std::string mode;
 		iss >> mode;
 		std::vector<std::string> modes;
-		bool flag = false;
 		if (!mode.empty() && (mode[0] != '+' && mode[0] != '-'))
 		{
 			client->AppendOutBuffer(":ircserv 501 " + client->GetNickname() + " :Unknown MODE flag\r\n");
@@ -673,7 +708,6 @@ void Server::ParseMessage(std::string message, Client *client)
 			if (!mode.empty())
 				modes.push_back(mode);
 			iss >> mode;
-			flag = true;
 		}
 		if (targetChannel->IsOPbyNick(client->GetNickname()) == true)
 		{
@@ -842,11 +876,10 @@ void Server::ParseMessage(std::string message, Client *client)
 					}
 				}
 			}
-		}
-		else if (flag){
-			client->AppendOutBuffer(":ircserv 482 " + client->GetNickname() + " " + channel + " :You're not a channel operator\r\n");
 			return;
 		}
+		client->AppendOutBuffer(":ircserv 482 " + client->GetNickname() + " " + channel + " :You're not a channel operator\r\n");
+		return;
 	}
 	if (!client->GetNickname().empty() && !client->GetUsername().empty() && client->GetRegistered() && client->GetAuth() && !client->GetLog())
 	{
