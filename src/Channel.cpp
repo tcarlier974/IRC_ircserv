@@ -63,6 +63,10 @@ bool Channel::CheckPassword(std::string pass) const
 
 bool Channel::AddMember(Client *client, std::string pass)
 {
+	if (std::find(_members.begin(), _members.end(), client) != _members.end())
+	{
+		return true;
+	}
 	if (!_password.empty() && !CheckPassword(pass))
 	{
 		client->AppendOutBuffer(":ircserv 475 " + client->GetNickname() + " " + _name + " :Cannot join channel (+k) - incorrect key\r\n");
@@ -73,21 +77,35 @@ bool Channel::AddMember(Client *client, std::string pass)
 		client->AppendOutBuffer(":ircserv 471 " + client->GetNickname() + " " + _name + " :Cannot join channel (+l) - channel is full\r\n");
 		return false;
 	}
+	std::list<Client *> invitedList = this->GetInvited();
+	if (this->getInv_only() && std::find(invitedList.begin(), invitedList.end(), client) == invitedList.end())
+	{
+		client->AppendOutBuffer(":ircserv 473 " + client->GetNickname() + " " + this->_name + " :Cannot join channel (+i)\r\n");
+		return false;
+	}
+	else if (std::find(invitedList.begin(), invitedList.end(), client) != invitedList.end())
+	{
+		this->RemoveInv(client);
+	}
 	if (_members.empty() && _operators.empty())
 	{
 		_operators.push_back(client);
 	}
-	if (std::find(_members.begin(), _members.end(), client) == _members.end())
-		_members.push_back(client);
+	_members.push_back(client);
 	Nuser++;
 	return true;
 }
 
 void Channel::RemoveMember(Client *client)
 {
+	if (!IsMember(client))
+	{
+		return;
+	}
 	_members.erase(std::remove(_members.begin(), _members.end(), client), _members.end());
 	_operators.erase(std::remove(_operators.begin(), _operators.end(), client), _operators.end());
-	Nuser--;
+	if (Nuser > 0)
+		Nuser--;
 }
 
 void 	Channel::RemoveInv(Client *client)

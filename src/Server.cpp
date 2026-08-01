@@ -336,22 +336,58 @@ void Server::ParseMessage(std::string message, Client *client)
 	}
 	else if (command == "JOIN")
 	{
-		std::string channelNames;
-		std::string key = "";
-		iss >> channelNames;
-		if (iss >> key)
-		{
-		}
 		if (!client->GetRegistered() || !client->GetAuth())
 		{
 			client->AppendOutBuffer(":ircserv 451 " + client->GetNickname() + " :You have not registered\r\n");
 			return;
 		}
-		if (!channelName.empty() && !(channelName.find_first_of(" ,\a\r\n:") != std::string::npos))
+
+		std::string channelsArg;
+		std::string keysArg;
+		if (!(iss >> channelsArg) || channelsArg.empty())
 		{
-			if (channelName[0] != '#')
+			client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " JOIN :Not enough parameters\r\n");
+			return;
+		}
+		iss >> keysArg;
+
+		std::vector<std::string> channels;
+		std::vector<std::string> keys;
+		std::string token;
+		std::stringstream channelsStream(channelsArg);
+		while (std::getline(channelsStream, token, ','))
+		{
+			if (!token.empty())
+				channels.push_back(token);
+		}
+		std::stringstream keysStream(keysArg);
+		while (std::getline(keysStream, token, ','))
+		{
+			keys.push_back(token);
+		}
+
+		for (size_t i = 0; i < channels.size(); ++i)
+		{
+			std::string channelName = channels[i];
+			if (channelName.empty() || channelName.find_first_of(" \a\r\n:") != std::string::npos)
+			{
+				client->AppendOutBuffer(":ircserv 403 " + client->GetNickname() + " " + channelName + " :No such channel (invalid name)\r\n");
+				continue;
+			}
+
+			std::string key = "";
+			if (i < keys.size())
+				key = keys[i];
+
+			if (channelName[0] != '#' && channelName.length() > 0)
 			{
 				channelName = "#" + channelName;
+			}
+			else if (channelName[0] == '#' && channelName.length() > 1){}
+			else
+			{
+				client->AppendOutBuffer(":ircserv 403 " + client->GetNickname() + " " + channelName + " :No such channel (invalid name)\r\n");
+				continue;
 			}
 			Channel *channel = NULL;
 			for (std::vector<Channel>::iterator it = _Channels.begin(); it != _Channels.end(); ++it)
@@ -368,18 +404,12 @@ void Server::ParseMessage(std::string message, Client *client)
 				_Channels.push_back(Channel(channelName));
 				channel = &_Channels.back();
 			}
-			std::list<Client *> invitedList = channel->GetInvited();
-			if (channel->getInv_only() && std::find(invitedList.begin(), invitedList.end(), client) == invitedList.end())
+			if (channel->IsMember(client))
 			{
-				client->AppendOutBuffer(":ircserv 473 " + client->GetNickname() + " " + channelName + " :Cannot join channel (+i)\r\n");
-				return;
-			}
-			else if (std::find(invitedList.begin(), invitedList.end(), client) != invitedList.end())
-			{
-				channel->RemoveInv(client);
+				continue;
 			}
 			if (!channel->AddMember(client, key))
-				return;
+				continue;
 			std::string joinMsg = ":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " JOIN :" + channelName + "\r\n";
 			channel->BroadcastMessage(joinMsg);
 
@@ -389,10 +419,9 @@ void Server::ParseMessage(std::string message, Client *client)
 			std::string rpl_endofnames = ":ircserv 366 " + client->GetNickname() + " " + channelName + " :End of /NAMES list.\r\n";
 			client->AppendOutBuffer(rpl_endofnames);
 		}
-		else
+		if (channels.empty())
 		{
-			client->AppendOutBuffer(":ircserv 403 " + client->GetNickname() + " " + channelName + " :No such channel (invalid name)\r\n");
-
+			client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " JOIN :Not enough parameters\r\n");
 		}
 	}
 	else if (command == "TOPIC")
@@ -691,7 +720,7 @@ void Server::ParseMessage(std::string message, Client *client)
 						}
 						else if (sign == '-' && !targetChannel->CheckPassword(""))
 						{
-							if (targetChannel->CheckPassword(argIt->c_str()))
+							if (count > 0 && targetChannel->CheckPassword(argIt->c_str()))
 							{
 								targetChannel->SetPassword("");
 								targetChannel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " " + "MODE " + channel.c_str() + " " + "-k\r\n");
@@ -699,6 +728,11 @@ void Server::ParseMessage(std::string message, Client *client)
 							else if (count > 0)
 							{
 								client->AppendOutBuffer(":ircserv 467 " + client->GetNickname() + " " + channel + " :Incorrect channel key\r\n");
+							}
+							else
+							{
+								client->AppendOutBuffer(":ircserv 467 " + client->GetNickname() + " " + channel + " :No channel key provided\r\n");
+								return;
 							}
 							argIt++;
 							count--;
