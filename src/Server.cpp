@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/08/01 10:41:59 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/08/01 10:47:34 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -751,7 +751,7 @@ void Server::ParseMessage(std::string message, Client *client)
 						}
 						break;
 					default:
-						if ((*it[i] == "+" || (*it)[i] == "-"))
+						if ((*it)[i] == '+' || (*it)[i] == '-')
 							sign = (*it)[i];
 						else
 							client->AppendOutBuffer(":ircserv 472 " + client->GetNickname() + " " + (*it) + " :is unknown mode char to me\r\n");
