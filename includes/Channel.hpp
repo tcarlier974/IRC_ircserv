@@ -28,6 +28,8 @@ class Channel
         std::string GetName() const;
 		std::string GetMemberList();
         
+        bool IsEmpty() const;
+
         bool AddMember(Client *client, std::string pass = "");
         void RemoveMember(Client *client);
 
@@ -53,6 +55,7 @@ class Channel
 		bool CheckPassword(std::string pass) const;
         
         void BroadcastMessage(std::string message, Client *exclude = NULL);
+        bool operator==(const Channel& other) const;
 };
 
 #endif

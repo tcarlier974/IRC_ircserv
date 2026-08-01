@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: igilbert <igilbert@student.42.fr>          +#+  +:+       +#+        */
+/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/26 13:06:15 by igilbert          #+#    #+#             */
-/*   Updated: 2026/08/01 15:34:00 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/08/01 17:11:49 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,6 +59,11 @@ int Channel::GetLimit() const
 bool Channel::CheckPassword(std::string pass) const
 {
 	return (pass == _password);
+}
+
+bool Channel::IsEmpty() const
+{
+	return Nuser == 0;
 }
 
 bool Channel::AddMember(Client *client, std::string pass)
@@ -227,4 +232,9 @@ bool Channel::DeOP(std::string nick)
 		}
 	}
 	return true;
+}
+
+bool Channel::operator==(const Channel& other) const
+{
+	return this->_name == other._name;
 }

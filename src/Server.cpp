@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: igilbert <igilbert@student.42.fr>          +#+  +:+       +#+        */
+/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/08/01 15:40:23 by igilbert         ###   ########.fr       */
+/*   Updated: 2026/08/01 17:12:27 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -329,6 +329,11 @@ void Server::ParseMessage(std::string message, Client *client)
 			it->RemoveMember(client);
 			std::string quitMsg = ":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " QUIT :" + reason + "\r\n";
 			it->BroadcastMessage(quitMsg, client);
+			if ((*it).IsEmpty()) 
+			{
+				_Channels.erase(it);
+				--it;
+			}
 		}
 		int fd = client->GetFd();
 		ClearClients(fd);
@@ -579,6 +584,10 @@ void Server::ParseMessage(std::string message, Client *client)
 			{
 				channel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " PART :" + channelName + " " + reason + "\r\n");
 				channel->RemoveMember(client);
+				if (channel->IsEmpty()) 
+				{
+					_Channels.erase(std::remove(_Channels.begin(), _Channels.end(), *channel), _Channels.end());
+				}
 			}
 			else
 			{
@@ -617,6 +626,10 @@ void Server::ParseMessage(std::string message, Client *client)
 		}
 		channel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " KICK " + channelName + " " + targetNick + reason + "\r\n");
 		channel->RemoveMember(getClientByNick(targetNick));
+		if (channel->IsEmpty()) 
+		{
+			_Channels.erase(std::remove(_Channels.begin(), _Channels.end(), *channel), _Channels.end());
+		}
 	}
 	else if (command == "MODE")
 	{
@@ -961,40 +974,42 @@ void Server::run()
 	}
 	for (size_t i = 0; i < this->_fds.size(); i++)
 	{
+		int current_fd = this->_fds[i].fd;
+
 		if (this->_fds[i].revents & POLLIN)
 		{
-			if (this->_fds[i].fd == _SerSocketFd)
+			if (current_fd == _SerSocketFd)
 				AcceptNewClient();
 			else
 			{
-				Client *client = getClientByFd(this->_fds[i].fd);
+				Client *client = getClientByFd(current_fd);
 				if (!client)
 				{
 					this->_fds.erase(this->_fds.begin() + i);
-					if (i > 0)
-						i--;
+					i--;
 					continue;
 				}
-				ReceiveNewData(client->GetFd());
+				ReceiveNewData(current_fd);
 			}
 		}
-		if (this->_fds[i].revents & POLLOUT)
+		if (i < this->_fds.size() && this->_fds[i].fd == current_fd)
 		{
-			Client *client = getClientByFd(this->_fds[i].fd);
-			if (client && !client->GetOutBuffer().empty())
+			if (this->_fds[i].revents & POLLOUT)
 			{
-				std::string out = client->GetOutBuffer();
-				std::cout << ">>> Envoi physique à " << client->GetNickname() << " [" << client->GetFd() << "] : " << out;
-				ssize_t bytes = send(client->GetFd(), out.c_str(), out.size(), 0);
-				if (bytes > 0)
+				Client *client = getClientByFd(current_fd);
+				if (client && !client->GetOutBuffer().empty())
 				{
-					client->EraseOutBuffer(bytes);
-				}
-				else if (bytes < 0)
-				{
-					std::cerr << "Erreur lors du send() sur le fd " << client->GetFd() << std::endl;
+					std::string out = client->GetOutBuffer();
+					std::cout << ">>> Envoi physique à " << client->GetNickname() << " [" << client->GetFd() << "] : " << out;
+					ssize_t bytes = send(client->GetFd(), out.c_str(), out.size(), 0);
+					if (bytes > 0)
+						client->EraseOutBuffer(bytes);
+					else if (bytes < 0)
+						std::cerr << "Erreur lors du send() sur le fd " << client->GetFd() << std::endl;
 				}
 			}
 		}
+		else if (current_fd != _SerSocketFd)
+			i--;
 	}
 }
