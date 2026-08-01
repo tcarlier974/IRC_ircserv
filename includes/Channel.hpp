@@ -28,7 +28,7 @@ class Channel
         std::string GetName() const;
 		std::string GetMemberList();
         
-        void AddMember(Client *client, std::string pass = "");
+        bool AddMember(Client *client, std::string pass = "");
         void RemoveMember(Client *client);
 
         void SetTopic(std::string topic);

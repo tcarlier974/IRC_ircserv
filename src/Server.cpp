@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: igilbert <igilbert@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/08/01 10:47:34 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/08/01 13:28:16 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -374,7 +374,8 @@ void Server::ParseMessage(std::string message, Client *client)
 				client->AppendOutBuffer(":ircserv 473 " + client->GetNickname() + " " + channelName + " :Cannot join channel (+i)\r\n");
 				return;
 			}
-			channel->AddMember(client, key);
+			if (!channel->AddMember(client, key))
+				return;
 			std::string joinMsg = ":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " JOIN :" + channelName + "\r\n";
 			channel->BroadcastMessage(joinMsg);
 
@@ -516,7 +517,9 @@ void Server::ParseMessage(std::string message, Client *client)
 	else if (command == "PART")
 	{
 		std::string channelName;
+		std::string reason = "";
 		iss >> channelName;
+		if (iss >> reason){}
 
 		if (!channelName.empty())
 		{
@@ -536,7 +539,7 @@ void Server::ParseMessage(std::string message, Client *client)
 
 			if (channel)
 			{
-				channel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " PART :" + channelName + "\r\n");
+				channel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " PART :" + channelName + " " + reason + "\r\n");
 				channel->RemoveMember(client);
 			}
 			else
@@ -629,9 +632,9 @@ void Server::ParseMessage(std::string message, Client *client)
 			}
 			(void)count;
 			char sign = '+';
+			std::vector<std::string>::iterator argIt = args.begin();
 			for (std::vector<std::string>::iterator it = modes.begin(); it != modes.end(); ++it)
 			{
-				std::vector<std::string>::iterator argIt = args.begin();
 				if ((*it)[0] == '+' || (*it)[0] == '-')
 				{
 					sign = (*it)[0];
@@ -712,6 +715,7 @@ void Server::ParseMessage(std::string message, Client *client)
 						{
 							client->AppendOutBuffer(":ircserv 461 " + client->GetNickname() + " MODE :No limit is set\r\n");
 						}
+						printf("%s\n", argIt->c_str());
 						break;
 					case 'i':
 						if (sign == '+')
@@ -825,9 +829,7 @@ void Server::ReceiveNewData(int fd)
 	{
 		std::cout << RED << "Client " << getClientByFd(fd)->GetNickname() << " [" << fd << "] > Disconnected" << WHI << std::endl;
 		ClearClients(fd);
-		close(fd);
 	}
-
 	else
 	{
 		Client *client = getClientByFd(fd);

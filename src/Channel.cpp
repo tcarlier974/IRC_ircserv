@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
+/*   By: igilbert <igilbert@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/26 13:06:15 by igilbert          #+#    #+#             */
-/*   Updated: 2026/08/01 10:20:14 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/08/01 12:47:27 by igilbert         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,17 +61,17 @@ bool Channel::CheckPassword(std::string pass) const
 	return (pass == _password);
 }
 
-void Channel::AddMember(Client *client, std::string pass)
+bool Channel::AddMember(Client *client, std::string pass)
 {
 	if (!_password.empty() && !CheckPassword(pass))
 	{
 		client->AppendOutBuffer(":ircserv 475 " + client->GetNickname() + " " + _name + " :Cannot join channel (+k) - incorrect key\r\n");
-		return;
+		return false;
 	}
 	if (_limit >= 0 && Nuser >= _limit)
 	{
 		client->AppendOutBuffer(":ircserv 471 " + client->GetNickname() + " " + _name + " :Cannot join channel (+l) - channel is full\r\n");
-		return;
+		return false;
 	}
 	if (_members.empty() && _operators.empty())
 	{
@@ -80,6 +80,7 @@ void Channel::AddMember(Client *client, std::string pass)
 	if (std::find(_members.begin(), _members.end(), client) == _members.end())
 		_members.push_back(client);
 	Nuser++;
+	return true;
 }
 
 void Channel::RemoveMember(Client *client)
