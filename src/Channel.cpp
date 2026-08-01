@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/26 13:06:15 by igilbert          #+#    #+#             */
-/*   Updated: 2026/07/31 18:01:40 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/08/01 10:20:14 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -149,6 +149,11 @@ void Channel::SetTopicOnlyOP(bool topic_onlyOP)
 bool Channel::getTopicOnlyOP() const
 {
 	return _topic_onlyOP;
+}
+
+bool Channel::IsMember(Client *client) const
+{
+    return (std::find(_members.begin(), _members.end(), client) != _members.end());
 }
 
 std::list<Client *> Channel::GetInvited() const

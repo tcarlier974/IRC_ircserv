@@ -46,6 +46,7 @@ class Channel
 		int GetLimit() const;
 		void SetTopicOnlyOP(bool topic_onlyOP);
 		bool getTopicOnlyOP() const;
+        bool IsMember(Client *client) const;
 
 		bool CheckPassword(std::string pass) const;
         

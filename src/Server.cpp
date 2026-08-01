@@ -6,7 +6,7 @@
 /*   By: tcarlier <tcarlier@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 15:18:38 by tcarlier          #+#    #+#             */
-/*   Updated: 2026/08/01 10:10:25 by tcarlier         ###   ########.fr       */
+/*   Updated: 2026/08/01 10:20:46 by tcarlier         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -590,7 +590,7 @@ void Server::ParseMessage(std::string message, Client *client)
 				break;
 			}
 		}
-		if (targetChannel->GetMemberList().find(client->GetNickname()) == std::string::npos)
+		if (targetChannel->IsMember(client) == false)
 		{
 			client->AppendOutBuffer(":ircserv 482 " + client->GetNickname() + " " + channel + " :You're not a member of that channel\r\n");
 			return;
