@@ -829,6 +829,20 @@ void Server::ReceiveNewData(int fd)
 	if (bytes <= 0)
 	{
 		std::cout << RED << "Client " << getClientByFd(fd)->GetNickname() << " [" << fd << "] > Disconnected" << WHI << std::endl;
+		for(std::vector<Channel>::iterator it = _Channels.begin(); it != _Channels.end(); ++it)
+		{
+			it->RemoveMember(getClientByFd(fd));
+			std::string quitMsg = ":" + getClientByFd(fd)->GetNickname() + "!" + getClientByFd(fd)->GetUsername() + "@" + getClientByFd(fd)->GetIPadd() + " QUIT :Client disconnected\r\n";
+			it->BroadcastMessage(quitMsg, getClientByFd(fd));
+		}
+		for (std::vector<pollfd>::iterator it = _fds.begin(); it != _fds.end(); ++it)
+		{
+			if (it->fd == fd)
+			{
+				_fds.erase(it);
+				break;
+			}
+		}
 		ClearClients(fd);
 	}
 	else
