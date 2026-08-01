@@ -331,7 +331,6 @@ void Server::ParseMessage(std::string message, Client *client)
 			it->BroadcastMessage(quitMsg, client);
 		}
 		int fd = client->GetFd();
-		close(fd);
 		ClearClients(fd);
 		return;
 	}
@@ -813,6 +812,15 @@ void Server::ClearClients(int fd)
 			{
 				_ClientNames.erase(it->GetNickname());
 			}
+			for (std::vector<pollfd>::iterator pollIt = _fds.begin(); pollIt != _fds.end(); ++pollIt)
+			{
+				if (pollIt->fd == fd)
+				{
+					_fds.erase(pollIt);
+					break;
+				}
+			}
+			close(fd);
 			_Clients.erase(it);
 			break;
 		}
@@ -834,14 +842,6 @@ void Server::ReceiveNewData(int fd)
 			it->RemoveMember(getClientByFd(fd));
 			std::string quitMsg = ":" + getClientByFd(fd)->GetNickname() + "!" + getClientByFd(fd)->GetUsername() + "@" + getClientByFd(fd)->GetIPadd() + " QUIT :Client disconnected\r\n";
 			it->BroadcastMessage(quitMsg, getClientByFd(fd));
-		}
-		for (std::vector<pollfd>::iterator it = _fds.begin(); it != _fds.end(); ++it)
-		{
-			if (it->fd == fd)
-			{
-				_fds.erase(it);
-				break;
-			}
 		}
 		ClearClients(fd);
 	}
