@@ -574,7 +574,7 @@ void Server::ParseMessage(std::string message, Client *client)
 		}
 		if (channel->IsMember(getClientByNick(targetNick)) == false)
 		{
-			client->AppendOutBuffer(":ircserv 442 " + client->GetNickname() + " " + channelName + " :Is not on that channel\r\n");
+			client->AppendOutBuffer(":ircserv 442 " + client->GetNickname() + " " + channelName + " :" + targetNick + " is not on that channel\r\n");
 			return;
 		}
 		channel->BroadcastMessage(":" + client->GetNickname() + "!" + client->GetUsername() + "@" + client->GetIPadd() + " KICK " + channelName + " " + targetNick + reason + "\r\n");
