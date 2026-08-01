@@ -589,7 +589,7 @@ void Server::ParseMessage(std::string message, Client *client)
 				targetChannel = &(*it);
 				break;
 			}
-			if (it == _Channels.end())
+			if (it + 1 == _Channels.end())
 			{
 				client->AppendOutBuffer(":ircserv 403 " + client->GetNickname() + " " + channel + " :No such channel\r\n");
 				return;

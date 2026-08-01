@@ -37,6 +37,7 @@
 # include	<vector>
 # include 	<list>
 # include	<cstdlib>
+# include	<cstdio>
 
 #define RED "\e[1;31m" //-> for red color
 #define WHI "\e[0;37m" //-> for white color
