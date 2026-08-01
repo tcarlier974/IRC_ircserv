@@ -850,6 +850,8 @@ void Server::ReceiveNewData(int fd)
 		std::cout << RED << "Client " << getClientByFd(fd)->GetNickname() << " [" << fd << "] > Disconnected" << WHI << std::endl;
 		for(std::vector<Channel>::iterator it = _Channels.begin(); it != _Channels.end(); ++it)
 		{
+			if ((*it).IsMember(getClientByFd(fd)) == false)
+				continue;
 			it->RemoveMember(getClientByFd(fd));
 			std::string quitMsg = ":" + getClientByFd(fd)->GetNickname() + "!" + getClientByFd(fd)->GetUsername() + "@" + getClientByFd(fd)->GetIPadd() + " QUIT :Client disconnected\r\n";
 			it->BroadcastMessage(quitMsg, getClientByFd(fd));
